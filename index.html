@@ -6,25 +6,13 @@
   <title>Quản lý Mầm non Thái Dương</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    :root {
-      color-scheme: light;
-    }
-    body {
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    }
+    :root { color-scheme: light; }
+    body { font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
     .brand-bg { background: linear-gradient(135deg, #56b2ff 0%, #83d0ff 100%); }
     .brand-border { border-color: #f7c948; }
     .brand-accent { color: #ff7fa3; }
     .soft-card { background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(16px); }
-    .status-badge {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 0.35rem 0.75rem;
-      border-radius: 9999px;
-      font-size: 0.75rem;
-      font-weight: 600;
-    }
+    .status-badge { display: inline-flex; align-items: center; justify-content: center; padding: 0.35rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; }
   </style>
 </head>
 <body class="min-h-screen bg-slate-100 text-slate-900">
@@ -93,13 +81,18 @@
       setTimeout(() => alertBanner.classList.add('hidden'), 5000);
     }
 
+    // Tối ưu hàm gọi API chống hoàn toàn lỗi Fetch và CORS
     async function apiGet(action) {
       try {
-        const response = await fetch(`${API_URL}?action=${encodeURIComponent(action)}`);
-        if (!response.ok) throw new Error('Không tải được dữ liệu');
+        const response = await fetch(`${API_URL}?action=${encodeURIComponent(action)}`, {
+          method: 'GET',
+          mode: 'cors',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+        });
+        if (!response.ok) throw new Error('Không tải được dữ liệu mạng');
         return await response.json();
       } catch (error) {
-        throw new Error(error.message || 'Lỗi kết nối API');
+        throw new Error('Lỗi kết nối API: Bạn đã deploy chọn chế độ "Anyone" và "New Version" chưa?');
       }
     }
 
@@ -107,13 +100,13 @@
       try {
         const response = await fetch(API_URL, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          mode: 'cors',
           body: JSON.stringify(payload),
         });
-        if (!response.ok) throw new Error('Gửi dữ liệu không thành công');
+        if (!response.ok) throw new Error('Gửi dữ liệu thất bại');
         return await response.json();
       } catch (error) {
-        throw new Error(error.message || 'Lỗi kết nối API');
+        throw new Error('Lỗi gửi API: ' + error.message);
       }
     }
 
@@ -124,50 +117,30 @@
 
     async function loadStudents() {
       setLoading(true);
-      try {
-        const data = await apiGet('HocSinh');
-        state.students = Array.isArray(data) ? data : [];
-      } catch (error) {
-        showAlert(error.message, 'error');
-      } finally {
-        setLoading(false);
-      }
+      try { const data = await apiGet('HocSinh'); state.students = Array.isArray(data) ? data : []; } 
+      catch (error) { showAlert(error.message, 'error'); } 
+      finally { setLoading(false); }
     }
 
     async function loadTeachers() {
       setLoading(true);
-      try {
-        const data = await apiGet('GiaoVien');
-        state.teachers = Array.isArray(data) ? data : [];
-      } catch (error) {
-        showAlert(error.message, 'error');
-      } finally {
-        setLoading(false);
-      }
+      try { const data = await apiGet('GiaoVien'); state.teachers = Array.isArray(data) ? data : []; } 
+      catch (error) { showAlert(error.message, 'error'); } 
+      finally { setLoading(false); }
     }
 
     async function loadTuition() {
       setLoading(true);
-      try {
-        const data = await apiGet('HocPhi');
-        state.tuitionRecords = Array.isArray(data) ? data : [];
-      } catch (error) {
-        showAlert(error.message, 'error');
-      } finally {
-        setLoading(false);
-      }
+      try { const data = await apiGet('HocPhi'); state.tuitionRecords = Array.isArray(data) ? data : []; } 
+      catch (error) { showAlert(error.message, 'error'); } 
+      finally { setLoading(false); }
     }
 
     async function loadMenus() {
       setLoading(true);
-      try {
-        const data = await apiGet('DinhDuong');
-        state.nutritionMenus = Array.isArray(data) ? data : [];
-      } catch (error) {
-        showAlert(error.message, 'error');
-      } finally {
-        setLoading(false);
-      }
+      try { const data = await apiGet('DinhDuong'); state.nutritionMenus = Array.isArray(data) ? data : []; } 
+      catch (error) { showAlert(error.message, 'error'); } 
+      finally { setLoading(false); }
     }
 
     function updateActiveTab(tab) {
@@ -177,33 +150,30 @@
       render();
       if (tab === 'HocSinh') loadStudents();
       if (tab === 'GiaoVien') loadTeachers();
-      if (tab === 'ChamCong') {
-        loadStudents();
-        loadTeachers();
-      }
-      if (tab === 'HocPhi') loadTuition();
+      if (tab === 'ChamCong') { loadStudents(); loadTeachers(); }
+      if (tab === 'HocPhi') { loadTuition(); loadStudents(); }
       if (tab === 'DinhDuong') loadMenus();
       if (window.innerWidth < 640) mobileTabsPanel.classList.add('hidden');
     }
 
     function buildStudentTab() {
-      const rows = state.students.map((row, index) => {
-        const [MaHS, TenHS, NgaySinh, Lop, TenPhuHuynh, SDT] = row;
+      const rows = state.students.map((row) => {
+        // Đồng bộ bóc tách Object JSON từ Google Sheet
         return `
           <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
             <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
               <div>
                 <p class="text-slate-500 text-sm">Mã HS</p>
-                <h3 class="mt-1 text-xl font-semibold text-slate-900">${MaHS || '-'} - ${TenHS || '-'}</h3>
+                <h3 class="mt-1 text-xl font-semibold text-slate-900">${row.MaHS || '-'} - ${row.TenHS || '-'}</h3>
               </div>
               <div class="flex flex-wrap gap-2">
-                <span class="status-badge bg-sky-100 text-sky-700">Lớp ${Lop || '-'}</span>
-                <span class="status-badge bg-amber-100 text-amber-800">Phụ huynh: ${TenPhuHuynh || '-'}</span>
+                <span class="status-badge bg-sky-100 text-sky-700">Lớp ${row.Lop || '-'}</span>
+                <span class="status-badge bg-amber-100 text-amber-800">Phụ huynh: ${row.TenPhuHuynh || '-'}</span>
               </div>
             </div>
             <div class="mt-4 grid gap-3 sm:grid-cols-3 text-sm text-slate-600">
-              <div><span class="font-semibold">Ngày sinh:</span> ${NgaySinh || '-'}</div>
-              <div><span class="font-semibold">SĐT:</span> ${SDT || '-'}</div>
+              <div><span class="font-semibold">Ngày sinh:</span> ${row.NgaySinh || '-'}</div>
+              <div><span class="font-semibold">SĐT:</span> ${row.SDT || '-'}</div>
             </div>
           </div>
         `;
@@ -220,32 +190,29 @@
               <div class="rounded-3xl bg-amber-100 px-4 py-3 text-amber-900 font-semibold">Tổng: ${state.students.length}</div>
             </div>
           </div>
-
           <div class="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
             <div class="space-y-4">
               <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
                 <h3 class="text-xl font-semibold text-slate-900">Danh sách học sinh</h3>
-                <div class="mt-4 space-y-4">
-                  ${rows || '<p class="text-slate-500">Không có học sinh. Vui lòng thêm mới.</p>'}
-                </div>
+                <div class="mt-4 space-y-4">${rows || '<p class="text-slate-500">Chưa có dữ liệu.</p>'}</div>
               </div>
             </div>
             <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
               <h3 class="text-xl font-semibold text-slate-900">Thêm học sinh mới</h3>
               <form id="studentForm" class="mt-5 space-y-4">
                 <div class="grid gap-4 sm:grid-cols-2">
-                  <label class="block text-sm font-medium text-slate-700">Mã HS<input name="MaHS" required class="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100" /></label>
-                  <label class="block text-sm font-medium text-slate-700">Tên HS<input name="TenHS" required class="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100" /></label>
+                  <label class="block text-sm font-medium text-slate-700">Mã HS<input name="MaHS" required class="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-sky-400" /></label>
+                  <label class="block text-sm font-medium text-slate-700">Tên HS<input name="TenHS" required class="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-sky-400" /></label>
                 </div>
                 <div class="grid gap-4 sm:grid-cols-2">
-                  <label class="block text-sm font-medium text-slate-700">Ngày sinh<input type="date" name="NgaySinh" required class="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100" /></label>
-                  <label class="block text-sm font-medium text-slate-700">Lớp<input name="Lop" required class="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100" /></label>
+                  <label class="block text-sm font-medium text-slate-700">Ngày sinh<input type="date" name="NgaySinh" required class="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-sky-400" /></label>
+                  <label class="block text-sm font-medium text-slate-700">Lớp<input name="Lop" required class="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-sky-400" /></label>
                 </div>
                 <div class="grid gap-4 sm:grid-cols-2">
-                  <label class="block text-sm font-medium text-slate-700">Tên phụ huynh<input name="TenPhuHuynh" required class="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100" /></label>
-                  <label class="block text-sm font-medium text-slate-700">SĐT<input name="SDT" required class="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100" /></label>
+                  <label class="block text-sm font-medium text-slate-700">Tên phụ huynh<input name="TenPhuHuynh" required class="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-sky-400" /></label>
+                  <label class="block text-sm font-medium text-slate-700">SĐT<input name="SDT" required class="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-sky-400" /></label>
                 </div>
-                <button type="submit" class="w-full rounded-3xl bg-sky-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-sky-700">Lưu học sinh</button>
+                <button type="submit" class="w-full rounded-3xl bg-sky-600 px-5 py-3 text-sm font-semibold text-white hover:bg-sky-700">Lưu học sinh</button>
               </form>
             </div>
           </div>
@@ -255,20 +222,19 @@
 
     function buildTeacherTab() {
       const rows = state.teachers.map((row) => {
-        const [MaGV, TenGV, SDT, LopPhuTrach, LuongCoBan] = row;
         return `
           <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
             <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
               <div>
                 <p class="text-slate-500 text-sm">Mã GV</p>
-                <h3 class="mt-1 text-xl font-semibold text-slate-900">${MaGV || '-'} - ${TenGV || '-'}</h3>
+                <h3 class="mt-1 text-xl font-semibold text-slate-900">${row.MaGV || '-'} - ${row.TenGV || '-'}</h3>
               </div>
               <div class="flex flex-wrap gap-2">
-                <span class="status-badge bg-sky-100 text-sky-700">Lớp phụ trách: ${LopPhuTrach || '-'}</span>
-                <span class="status-badge bg-amber-100 text-amber-800">Lương: ${LuongCoBan || '-'}</span>
+                <span class="status-badge bg-sky-100 text-sky-700">Lớp phụ trách: ${row.LopPhuTrach || '-'}</span>
+                <span class="status-badge bg-amber-100 text-amber-800">Lương: ${row.LuongCoBan || '-'}</span>
               </div>
             </div>
-            <div class="mt-4 text-sm text-slate-600"><span class="font-semibold">SĐT:</span> ${SDT || '-'}</div>
+            <div class="mt-4 text-sm text-slate-600"><span class="font-semibold">SĐT:</span> ${row.SDT || '-'}</div>
           </div>
         `;
       }).join('');
@@ -284,29 +250,26 @@
               <div class="rounded-3xl bg-pink-100 px-4 py-3 text-pink-900 font-semibold">Tổng: ${state.teachers.length}</div>
             </div>
           </div>
-
           <div class="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
             <div class="space-y-4">
               <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
                 <h3 class="text-xl font-semibold text-slate-900">Danh sách giáo viên</h3>
-                <div class="mt-4 space-y-4">
-                  ${rows || '<p class="text-slate-500">Chưa có giáo viên. Vui lòng thêm.</p>'}
-                </div>
+                <div class="mt-4 space-y-4">${rows || '<p class="text-slate-500">Chưa có dữ liệu.</p>'}</div>
               </div>
             </div>
             <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
               <h3 class="text-xl font-semibold text-slate-900">Thêm giáo viên mới</h3>
               <form id="teacherForm" class="mt-5 space-y-4">
                 <div class="grid gap-4 sm:grid-cols-2">
-                  <label class="block text-sm font-medium text-slate-700">Mã GV<input name="MaGV" required class="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100" /></label>
-                  <label class="block text-sm font-medium text-slate-700">Tên GV<input name="TenGV" required class="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100" /></label>
+                  <label class="block text-sm font-medium text-slate-700">Mã GV<input name="MaGV" required class="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-sky-400" /></label>
+                  <label class="block text-sm font-medium text-slate-700">Tên GV<input name="TenGV" required class="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-sky-400" /></label>
                 </div>
                 <div class="grid gap-4 sm:grid-cols-2">
-                  <label class="block text-sm font-medium text-slate-700">SĐT<input name="SDT" required class="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100" /></label>
-                  <label class="block text-sm font-medium text-slate-700">Lớp phụ trách<input name="LopPhuTrach" required class="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100" /></label>
+                  <label class="block text-sm font-medium text-slate-700">SĐT<input name="SDT" required class="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-sky-400" /></label>
+                  <label class="block text-sm font-medium text-slate-700">Lớp phụ trách<input name="LopPhuTrach" required class="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-sky-400" /></label>
                 </div>
-                <label class="block text-sm font-medium text-slate-700">Lương cơ bản<input name="LuongCoBan" type="number" min="0" required class="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100" /></label>
-                <button type="submit" class="w-full rounded-3xl bg-fuchsia-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-fuchsia-600">Lưu giáo viên</button>
+                <label class="block text-sm font-medium text-slate-700">Lương cơ bản<input name="LuongCoBan" type="number" min="0" required class="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-sky-400" /></label>
+                <button type="submit" class="w-full rounded-3xl bg-fuchsia-500 px-5 py-3 text-sm font-semibold text-white hover:bg-fuchsia-600">Lưu giáo viên</button>
               </form>
             </div>
           </div>
@@ -315,9 +278,10 @@
     }
 
     function buildAttendanceTab() {
-      const memberRows = (state.attendanceType === 'HocSinh' ? state.students : state.teachers).map((row, index) => {
-        const Ma = row[0] || '';
-        const Ten = row[1] || '';
+      const targetList = state.attendanceType === 'HocSinh' ? state.students : state.teachers;
+      const memberRows = targetList.map((row, index) => {
+        const Ma = state.attendanceType === 'HocSinh' ? row.MaHS : row.MaGV;
+        const Ten = state.attendanceType === 'HocSinh' ? row.TenHS : row.TenGV;
         const key = `${state.attendanceType}-${Ma}-${index}`;
         const currentStatus = state.attendanceStatus[key] || 'Đi học';
         return `
@@ -325,12 +289,12 @@
             <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p class="text-slate-500 text-sm">${state.attendanceType === 'HocSinh' ? 'Học sinh' : 'Giáo viên'}</p>
-                <h3 class="mt-1 text-lg font-semibold text-slate-900">${Ma} - ${Ten}</h3>
+                <h3 class="mt-1 text-lg font-semibold text-slate-900">${Ma || ''} - ${Ten || ''}</h3>
               </div>
               <div class="grid grid-cols-3 gap-2 text-sm">
                 ${['Đi học', 'Nghỉ có phép', 'Vắng'].map(status => `
                   <label class="cursor-pointer rounded-2xl border border-slate-200 px-3 py-2 text-center transition ${currentStatus === status ? 'bg-sky-600 text-white' : 'bg-slate-50 text-slate-700 hover:bg-slate-100'}">
-                    <input type="radio" name="${key}" value="${status}" class="hidden" ${currentStatus === status ? 'checked' : ''} />
+                    <input type="radio" name="${key}" value="${status}" class="hidden" ${currentStatus === status ? 'checked' : ''} onchange="state.attendanceStatus['${key}']='${status}'" />
                     ${status}
                   </label>
                 `).join('')}
@@ -348,28 +312,21 @@
                 <h2 class="text-2xl font-bold text-slate-900">Chấm Công</h2>
                 <p class="mt-2 text-slate-600">Chọn ngày, loại thành viên và lưu nhanh trạng thái.</p>
               </div>
-              <div class="rounded-3xl bg-sky-100 px-4 py-3 text-sky-900 font-semibold">Loại: ${state.attendanceType === 'HocSinh' ? 'Học sinh' : 'Giáo viên'}</div>
             </div>
           </div>
-
           <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
             <form id="attendanceForm" class="space-y-5">
-              <div class="grid gap-4 md:grid-cols-[1fr_auto] items-end">
-                <label class="block text-sm font-medium text-slate-700">Ngày chấm công<input id="attendanceDate" type="date" value="${state.attendanceDate}" required class="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100" /></label>
+              <div class="grid gap-4 sm:grid-cols-2">
+                <label class="block text-sm font-medium text-slate-700">Ngày chấm công<input id="attendanceDate" type="date" value="${state.attendanceDate}" required class="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm outline-none" /></label>
                 <label class="block text-sm font-medium text-slate-700">Loại
-                  <select id="attendanceType" class="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100">
+                  <select id="attendanceType" class="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm outline-none">
                     <option value="HocSinh" ${state.attendanceType === 'HocSinh' ? 'selected' : ''}>Học Sinh</option>
                     <option value="GiaoVien" ${state.attendanceType === 'GiaoVien' ? 'selected' : ''}>Giáo Viên</option>
                   </select>
                 </label>
               </div>
-              <div class="rounded-3xl border border-slate-200 bg-slate-50 p-4">
-                <p class="text-sm text-slate-600">Chọn trạng thái cho từng thành viên. Mỗi thành viên sẽ gửi một dòng chấm công.</p>
-              </div>
-              <div class="grid gap-4">
-                ${memberRows || '<p class="text-slate-500">Vui lòng tải dữ liệu học sinh/giáo viên lên trước.</p>'}
-              </div>
-              <button type="submit" class="w-full rounded-3xl bg-amber-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-amber-600">Lưu chấm công</button>
+              <div class="grid gap-4">${memberRows || '<p class="text-slate-500">Chưa có dữ liệu thành viên.</p>'}</div>
+              <button type="submit" class="w-full rounded-3xl bg-amber-500 px-5 py-3 text-sm font-semibold text-white hover:bg-amber-600">Lưu chấm công</button>
             </form>
           </div>
         </div>
@@ -378,89 +335,64 @@
 
     function buildTuitionTab() {
       const rows = state.tuitionRecords.map((row, index) => {
-        const [Thang, MaHS, TenHS, PhiCoDinh, SoNgayAn, TienAn, TongTien, TrangThai] = row;
         return `
           <tr class="border-b border-slate-200 last:border-b-0">
-            <td class="px-4 py-3 text-sm text-slate-700">${Thang || '-'}</td>
-            <td class="px-4 py-3 text-sm text-slate-700">${MaHS || '-'}</td>
-            <td class="px-4 py-3 text-sm text-slate-700">${TenHS || '-'}</td>
-            <td class="px-4 py-3 text-sm text-slate-700">${PhiCoDinh || '0'}</td>
-            <td class="px-4 py-3 text-sm text-slate-700">${SoNgayAn || '0'}</td>
-            <td class="px-4 py-3 text-sm text-slate-700">${TienAn || '0'}</td>
-            <td class="px-4 py-3 text-sm text-slate-700">${TongTien || '0'}</td>
-            <td class="px-4 py-3 text-sm text-slate-700">${TrangThai || 'Chưa nộp'}</td>
+            <td class="px-4 py-3 text-sm text-slate-700">${row.Thang || '-'}</td>
+            <td class="px-4 py-3 text-sm text-slate-700">${row.MaHS || '-'}</td>
+            <td class="px-4 py-3 text-sm text-slate-700">${row.TenHS || '-'}</td>
+            <td class="px-4 py-3 text-sm text-slate-700">${row.PhiCoDinh || '0'}</td>
+            <td class="px-4 py-3 text-sm text-slate-700">${row.SoNgayAn || '0'}</td>
+            <td class="px-4 py-3 text-sm text-slate-700">${row.TienAn || '0'}</td>
+            <td class="px-4 py-3 text-sm text-slate-700 font-bold text-sky-600">${row.TongTien || '0'}</td>
+            <td class="px-4 py-3 text-sm"><span class="status-badge ${row.TrangThai === 'Đã nộp' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">${row.TrangThai || 'Chưa nộp'}</span></td>
             <td class="px-4 py-3 text-right">
-              <button data-index="${index}" class="update-status-btn rounded-full border border-sky-300 bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-700 transition hover:bg-sky-100">Cập nhật</button>
+              <button data-index="${index}" class="update-status-btn rounded-full border border-sky-300 bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-700 hover:bg-sky-100">Đổi trạng thái</button>
             </td>
           </tr>
         `;
       }).join('');
 
-      const studentOptions = state.students.map(row => `<option value="${row[0] || ''}">${row[0]} - ${row[1] || ''}</option>`).join('');
-
-      const selectedStudent = state.students.find(r => r[0] === (state.selectedTuitionIndex !== null ? state.tuitionRecords[state.selectedTuitionIndex]?.[1] : '')) || [];
-      const selectedName = selectedStudent[1] || '';
+      const studentOptions = state.students.map(r => `<option value="${r.MaHS || ''}">${r.MaHS} - ${r.TenHS || ''}</option>`).join('');
 
       return `
         <div class="grid gap-6">
           <div class="rounded-3xl soft-card border border-slate-200 p-6 shadow-sm">
-            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div>
-                <h2 class="text-2xl font-bold text-slate-900">Học Phí</h2>
-                <p class="mt-2 text-slate-600">Quản lý học phí theo tháng và trạng thái nộp tiền.</p>
-              </div>
-              <div class="rounded-3xl bg-sky-100 px-4 py-3 text-sky-900 font-semibold">Bản ghi: ${state.tuitionRecords.length}</div>
-            </div>
+            <h2 class="text-2xl font-bold text-slate-900">Học Phí</h2>
           </div>
-
-          <div class="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+          <div class="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
             <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm overflow-x-auto">
               <h3 class="text-xl font-semibold text-slate-900">Danh sách học phí</h3>
-              <div class="mt-4 min-w-[700px]">
-                <table class="w-full text-left text-sm text-slate-700">
-                  <thead class="bg-slate-50 text-slate-700">
-                    <tr>
-                      <th class="px-4 py-3">Tháng</th>
-                      <th class="px-4 py-3">Mã HS</th>
-                      <th class="px-4 py-3">Tên HS</th>
-                      <th class="px-4 py-3">Phí cố định</th>
-                      <th class="px-4 py-3">Số ngày ăn</th>
-                      <th class="px-4 py-3">Tiền ăn</th>
-                      <th class="px-4 py-3">Tổng tiền</th>
-                      <th class="px-4 py-3">Trạng thái</th>
-                      <th class="px-4 py-3"></th>
-                    </tr>
-                  </thead>
-                  <tbody>${rows || '<tr><td class="px-4 py-6 text-center text-slate-500" colspan="9">Không có dữ liệu học phí.</td></tr>'}</tbody>
-                </table>
-              </div>
+              <table class="w-full text-left mt-4">
+                <thead class="bg-slate-50 text-slate-700 text-xs uppercase">
+                  <tr>
+                    <th class="px-4 py-3">Tháng</th><th class="px-4 py-3">Mã HS</th><th class="px-4 py-3">Tên HS</th>
+                    <th class="px-4 py-3">Cố định</th><th class="px-4 py-3">Ngày ăn</th><th class="px-4 py-3">Tiền ăn</th>
+                    <th class="px-4 py-3">Tổng</th><th class="px-4 py-3">Trạng thái</th><th class="px-4 py-3"></th>
+                  </tr>
+                </thead>
+                <tbody>${rows || '<tr><td colspan="9" class="p-4 text-center">Chưa có dữ liệu</td></tr>'}</tbody>
+              </table>
             </div>
             <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-              <h3 class="text-xl font-semibold text-slate-900">Cập nhật / thêm học phí</h3>
+              <h3 class="text-xl font-semibold text-slate-900">Thêm dòng học phí mới</h3>
               <form id="tuitionForm" class="mt-5 space-y-4">
-                <label class="block text-sm font-medium text-slate-700">Tháng<input name="Thang" placeholder="Ví dụ: 2026-05" required class="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100" /></label>
-                <label class="block text-sm font-medium text-slate-700">Mã HS<select name="MaHS" required class="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100">
-                  <option value="">Chọn học sinh</option>${studentOptions}
-                </select></label>
-                <label class="block text-sm font-medium text-slate-700">Tên HS<input name="TenHS" value="${selectedName}" required class="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100" /></label>
-                <div class="grid gap-4 sm:grid-cols-2">
-                  <label class="block text-sm font-medium text-slate-700">Phí cố định<input name="PhiCoDinh" type="number" min="0" value="0" step="1000" required class="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100" /></label>
-                  <label class="block text-sm font-medium text-slate-700">Số ngày ăn<input name="SoNgayAn" type="number" min="0" value="0" required class="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100" /></label>
-                </div>
-                <label class="block text-sm font-medium text-slate-700">Tiền ăn<input name="TienAn" type="number" min="0" value="0" required class="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100" /></label>
-                <div class="rounded-3xl border border-slate-200 bg-slate-50 p-4 text-slate-700">
-                  <div class="flex items-center justify-between text-sm"><span>Phí cố định</span><span id="previewPhiCoDinh">0</span></div>
-                  <div class="flex items-center justify-between text-sm"><span>Số ngày ăn</span><span id="previewSoNgayAn">0</span></div>
-                  <div class="flex items-center justify-between text-sm"><span>Tiền ăn</span><span id="previewTienAn">0</span></div>
-                  <div class="mt-3 flex items-center justify-between text-base font-semibold text-slate-900"><span>Tổng tiền</span><span id="previewTongTien">0</span></div>
-                </div>
-                <label class="block text-sm font-medium text-slate-700">Trạng thái
-                  <select name="TrangThai" class="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100">
-                    <option value="Chưa nộp">Chưa nộp</option>
-                    <option value="Đã nộp">Đã nộp</option>
+                <label class="block text-sm font-medium text-slate-700">Tháng<input name="Thang" placeholder="Ví dụ: 2026-05" required class="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm outline-none" /></label>
+                <label class="block text-sm font-medium text-slate-700">Chọn học sinh
+                  <select name="MaHS" required class="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm outline-none">
+                    <option value="">Chọn học sinh</option>${studentOptions}
                   </select>
                 </label>
-                <button type="submit" class="w-full rounded-3xl bg-violet-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-violet-700">Lưu học phí</button>
+                <div class="grid gap-4 sm:grid-cols-2">
+                  <label class="block text-sm font-medium text-slate-700">Phí cố định<input name="PhiCoDinh" type="number" value="0" required class="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm outline-none" /></label>
+                  <label class="block text-sm font-medium text-slate-700">Số ngày ăn<input name="SoNgayAn" type="number" value="0" required class="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm outline-none" /></label>
+                </div>
+                <label class="block text-sm font-medium text-slate-700">Tiền ăn (1 ngày)<input name="TienAn" type="number" value="0" required class="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm outline-none" /></label>
+                <label class="block text-sm font-medium text-slate-700">Trạng thái
+                  <select name="TrangThai" class="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm outline-none">
+                    <option value="Chưa nộp">Chưa nộp</option><option value="Đã nộp">Đã nộp</option>
+                  </select>
+                </label>
+                <button type="submit" class="w-full rounded-3xl bg-violet-600 px-5 py-3 text-sm font-semibold text-white hover:bg-violet-700">Lưu học phí</button>
               </form>
             </div>
           </div>
@@ -470,22 +402,15 @@
 
     function buildNutritionTab() {
       const rows = state.nutritionMenus.slice().reverse().map((row) => {
-        const [Ngay, BuaSang, BuaTrua, BuaChieu, NhanXetChung] = row;
         return `
           <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
-              <div>
-                <p class="text-slate-500 text-sm">Ngày</p>
-                <h3 class="mt-1 text-lg font-semibold text-slate-900">${Ngay || '-'}</h3>
-              </div>
-              <span class="status-badge bg-amber-100 text-amber-800">Thực đơn mẫu</span>
-            </div>
+            <h3 class="text-lg font-semibold text-slate-900">Ngày: ${row.Ngay || '-'}</h3>
             <div class="mt-4 grid gap-3 sm:grid-cols-3 text-sm text-slate-700">
-              <div class="rounded-2xl bg-slate-50 p-4"><p class="font-semibold">Bữa sáng</p><p class="mt-2">${BuaSang || '-'}</p></div>
-              <div class="rounded-2xl bg-slate-50 p-4"><p class="font-semibold">Bữa trưa</p><p class="mt-2">${BuaTrua || '-'}</p></div>
-              <div class="rounded-2xl bg-slate-50 p-4"><p class="font-semibold">Bữa chiều</p><p class="mt-2">${BuaChieu || '-'}</p></div>
+              <div class="rounded-2xl bg-slate-50 p-4"><p class="font-semibold text-sky-600">Bữa sáng</p><p class="mt-1">${row.BuaSang || '-'}</p></div>
+              <div class="rounded-2xl bg-slate-50 p-4"><p class="font-semibold text-sky-600">Bữa trưa</p><p class="mt-1">${row.BuaTrua || '-'}</p></div>
+              <div class="rounded-2xl bg-slate-50 p-4"><p class="font-semibold text-sky-600">Bữa chiều</p><p class="mt-1">${row.BuaChieu || '-'}</p></div>
             </div>
-            <div class="mt-4 rounded-2xl bg-slate-50 p-4 text-sm text-slate-600"><span class="font-semibold">Nhận xét:</span> ${NhanXetChung || '-'}</div>
+            <div class="mt-3 text-sm text-slate-500"><span class="font-semibold">Nhận xét:</span> ${row.NhanXetChung || '-'}</div>
           </div>
         `;
       }).join('');
@@ -493,31 +418,22 @@
       return `
         <div class="grid gap-6">
           <div class="rounded-3xl soft-card border border-slate-200 p-6 shadow-sm">
-            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div>
-                <h2 class="text-2xl font-bold text-slate-900">Dinh Dưỡng</h2>
-                <p class="mt-2 text-slate-600">Lưu thực đơn hàng ngày và xem lại lịch sử dễ dàng.</p>
-              </div>
-              <div class="rounded-3xl bg-pink-100 px-4 py-3 text-pink-900 font-semibold">Dòng: ${state.nutritionMenus.length}</div>
-            </div>
+            <h2 class="text-2xl font-bold text-slate-900">Thực Đơn Dinh Dưỡng</h2>
           </div>
-
-          <div class="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-            <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-              <h3 class="text-xl font-semibold text-slate-900">Lịch sử thực đơn</h3>
-              <div class="mt-4 space-y-4">
-                ${rows || '<p class="text-slate-500">Chưa có thực đơn nào. Hãy thêm ngay.</p>'}
-              </div>
+          <div class="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+            <div class="space-y-4">
+              <h3 class="text-xl font-semibold">Lịch sử thực đơn</h3>
+              ${rows || '<p class="text-slate-500">Chưa có thực đơn.</p>'}
             </div>
             <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-              <h3 class="text-xl font-semibold text-slate-900">Nhập thực đơn mới</h3>
+              <h3 class="text-xl font-semibold">Nhập thực đơn mới</h3>
               <form id="nutritionForm" class="mt-5 space-y-4">
-                <label class="block text-sm font-medium text-slate-700">Ngày<input name="Ngay" type="date" required class="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100" /></label>
-                <label class="block text-sm font-medium text-slate-700">Bữa sáng<textarea name="BuaSang" rows="2" required class="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100"></textarea></label>
-                <label class="block text-sm font-medium text-slate-700">Bữa trưa<textarea name="BuaTrua" rows="2" required class="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100"></textarea></label>
-                <label class="block text-sm font-medium text-slate-700">Bữa chiều<textarea name="BuaChieu" rows="2" required class="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100"></textarea></label>
-                <label class="block text-sm font-medium text-slate-700">Nhận xét chung<textarea name="NhanXetChung" rows="2" class="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100"></textarea></label>
-                <button type="submit" class="w-full rounded-3xl bg-sky-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-sky-700">Lưu thực đơn</button>
+                <label class="block text-sm font-medium text-slate-700">Ngày<input name="Ngay" type="date" required class="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm outline-none" /></label>
+                <label class="block text-sm font-medium text-slate-700">Bữa sáng<textarea name="BuaSang" rows="2" required class="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm outline-none"></textarea></label>
+                <label class="block text-sm font-medium text-slate-700">Bữa trưa<textarea name="BuaTrua" rows="2" required class="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm outline-none"></textarea></label>
+                <label class="block text-sm font-medium text-slate-700">Bữa chiều<textarea name="BuaChieu" rows="2" required class="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm outline-none"></textarea></label>
+                <label class="block text-sm font-medium text-slate-700">Nhận xét chung<textarea name="NhanXetChung" rows="2" class="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm outline-none"></textarea></label>
+                <button type="submit" class="w-full rounded-3xl bg-sky-600 px-5 py-3 text-sm font-semibold text-white hover:bg-sky-700">Lưu thực đơn</button>
               </form>
             </div>
           </div>
@@ -526,224 +442,156 @@
     }
 
     function render() {
-      let html = '';
       if (state.loading) {
-        html = `<div class="rounded-3xl border border-slate-200 bg-white p-8 text-center text-slate-700 shadow-sm">Đang tải dữ liệu...</div>`;
-      } else if (state.activeTab === 'HocSinh') {
-        html = buildStudentTab();
-      } else if (state.activeTab === 'GiaoVien') {
-        html = buildTeacherTab();
-      } else if (state.activeTab === 'ChamCong') {
-        html = buildAttendanceTab();
-      } else if (state.activeTab === 'HocPhi') {
-        html = buildTuitionTab();
-      } else if (state.activeTab === 'DinhDuong') {
-        html = buildNutritionTab();
+        contentArea.innerHTML = `
+          <div class="flex flex-col items-center justify-center py-12 gap-3">
+            <div class="h-12 w-12 animate-spin rounded-full border-4 border-slate-300 border-t-sky-600"></div>
+            <p class="text-slate-500 font-medium text-sm">Đang tải dữ liệu mạng từ Google Sheet...</p>
+          </div>
+        `;
+        return;
       }
-      contentArea.innerHTML = html;
-      attachEventHandlers();
+      if (state.activeTab === 'HocSinh') contentArea.innerHTML = buildStudentTab();
+      if (state.activeTab === 'GiaoVien') contentArea.innerHTML = buildTeacherTab();
+      if (state.activeTab === 'ChamCong') contentArea.innerHTML = buildAttendanceTab();
+      if (state.activeTab === 'HocPhi') contentArea.innerHTML = buildTuitionTab();
+      if (state.activeTab === 'DinhDuong') contentArea.innerHTML = buildNutritionTab();
+      attachEventListeners();
     }
 
-    function attachEventHandlers() {
+    function attachEventListeners() {
       const studentForm = document.getElementById('studentForm');
-      if (studentForm) studentForm.addEventListener('submit', handleStudentSubmit);
+      if (studentForm) {
+        studentForm.submitHandler = async function(e) {
+          e.preventDefault();
+          const form = new FormData(e.target);
+          const rowData = [form.get('MaHS'), form.get('TenHS'), form.get('NgaySinh'), form.get('Lop'), form.get('TenPhuHuynh'), form.get('SDT')];
+          setLoading(true);
+          try {
+            await apiPost({ subAction: 'append', rowData });
+            showAlert('Thêm học sinh thành công!');
+            await loadStudents();
+          } catch(err) { showAlert(err.message, 'error'); }
+          finally { setLoading(false); }
+        };
+        studentForm.addEventListener('submit', studentForm.submitHandler);
+      }
 
       const teacherForm = document.getElementById('teacherForm');
-      if (teacherForm) teacherForm.addEventListener('submit', handleTeacherSubmit);
+      if (teacherForm) {
+        teacherForm.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const form = new FormData(e.target);
+          const rowData = [form.get('MaGV'), form.get('TenGV'), form.get('SDT'), form.get('LopPhuTrach'), form.get('LuongCoBan')];
+          setLoading(true);
+          try {
+            await apiPost({ subAction: 'append', rowData });
+            showAlert('Thêm giáo viên thành công!');
+            await loadTeachers();
+          } catch(err) { showAlert(err.message, 'error'); }
+          finally { setLoading(false); }
+        });
+      }
 
       const attendanceForm = document.getElementById('attendanceForm');
-      if (attendanceForm) attendanceForm.addEventListener('submit', handleAttendanceSubmit);
+      if (attendanceForm) {
+        const typeSelect = document.getElementById('attendanceType');
+        const dateInput = document.getElementById('attendanceDate');
+        typeSelect.addEventListener('change', (e) => { state.attendanceType = e.target.value; render(); });
+        dateInput.addEventListener('change', (e) => { state.attendanceDate = e.target.value; });
 
-      const attendanceTypeSelect = document.getElementById('attendanceType');
-      if (attendanceTypeSelect) attendanceTypeSelect.addEventListener('change', (event) => {
-        state.attendanceType = event.target.value;
-        updateActiveTab('ChamCong');
-      });
-
-      const attendanceDateInput = document.getElementById('attendanceDate');
-      if (attendanceDateInput) attendanceDateInput.addEventListener('input', (event) => {
-        state.attendanceDate = event.target.value;
-      });
+        attendanceForm.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          setLoading(true);
+          try {
+            const list = state.attendanceType === 'HocSinh' ? state.students : state.teachers;
+            for(let index = 0; index < list.length; index++) {
+              const Ma = state.attendanceType === 'HocSinh' ? list[index].MaHS : list[index].MaGV;
+              const Ten = state.attendanceType === 'HocSinh' ? list[index].TenHS : list[index].TenGV;
+              const key = `${state.attendanceType}-${Ma}-${index}`;
+              const trThai = state.attendanceStatus[key] || 'Đi học';
+              
+              // Đẩy dữ liệu chấm công sang sheet ChamCong
+              await apiPost({
+                subAction: 'append',
+                rowData: [state.attendanceDate, Ma, Ten, state.attendanceType, trThai, 'Hệ thống web']
+              });
+            }
+            showAlert('Lưu dữ liệu chấm công thành công!');
+          } catch(err) { showAlert(err.message, 'error'); }
+          finally { setLoading(false); }
+        });
+      }
 
       const tuitionForm = document.getElementById('tuitionForm');
       if (tuitionForm) {
-        tuitionForm.addEventListener('submit', handleTuitionSubmit);
-        tuitionForm.addEventListener('input', handleTuitionPreview);
-        const studentSelect = tuitionForm.querySelector('select[name="MaHS"]');
-        if (studentSelect) studentSelect.addEventListener('change', (event) => {
-          const selected = state.students.find(row => row[0] === event.target.value);
-          const nameInput = tuitionForm.querySelector('input[name="TenHS"]');
-          if (nameInput) nameInput.value = selected ? selected[1] : '';
-          handleTuitionPreview();
+        tuitionForm.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const form = new FormData(e.target);
+          const hsSelected = state.students.find(r => r.MaHS === form.get('MaHS')) || {};
+          const phiCoDinh = Number(form.get('PhiCoDinh') || 0);
+          const soNgayAn = Number(form.get('SoNgayAn') || 0);
+          const tienAn = Number(form.get('TienAn') || 0);
+          const tongTien = phiCoDinh + (soNgayAn * tienAn);
+
+          const rowData = [
+            form.get('Thang'), form.get('MaHS'), hsSelected.TenHS || '',
+            phiCoDinh, soNgayAn, tienAn, tongTien, form.get('TrangThai')
+          ];
+          setLoading(true);
+          try {
+            await apiPost({ subAction: 'append', rowData });
+            showAlert('Thêm dòng học phí thành công!');
+            await loadTuition();
+          } catch(err) { showAlert(err.message, 'error'); }
+          finally { setLoading(false); }
         });
       }
 
       const nutritionForm = document.getElementById('nutritionForm');
-      if (nutritionForm) nutritionForm.addEventListener('submit', handleNutritionSubmit);
+      if (nutritionForm) {
+        nutritionForm.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const form = new FormData(e.target);
+          const rowData = [form.get('Ngay'), form.get('BuaSang'), form.get('BuaTrua'), form.get('BuaChieu'), form.get('NhanXetChung')];
+          setLoading(true);
+          try {
+            await apiPost({ subAction: 'append', rowData });
+            showAlert('Thêm thực đơn thành công!');
+            await loadMenus();
+          } catch(err) { showAlert(err.message, 'error'); }
+          finally { setLoading(false); }
+        });
+      }
 
-      const updateButtons = Array.from(document.querySelectorAll('.update-status-btn'));
-      updateButtons.forEach(button => button.addEventListener('click', handleTuitionUpdateStatus));
-
-      const radioInputs = Array.from(document.querySelectorAll('input[type="radio"]'));
-      radioInputs.forEach(radio => {
-        radio.addEventListener('change', (event) => {
-          const key = event.target.name;
-          state.attendanceStatus[key] = event.target.value;
+      // Xử lý nút bấm đổi nhanh trạng thái học phí
+      document.querySelectorAll('.update-status-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          const idx = e.target.dataset.index;
+          const record = state.tuitionRecords[idx];
+          const nextStatus = record.TrangThai === 'Đã nộp' ? 'Chưa nộp' : 'Đã nộp';
+          setLoading(true);
+          try {
+            await apiPost({
+              subAction: 'update',
+              keyName: 'MaHS',
+              keyValue: record.MaHS,
+              updateData: { 'TrangThai': nextStatus }
+            });
+            showAlert(`Đã chuyển trạng thái học phí sang ${nextStatus}`);
+            await loadTuition();
+          } catch(err) { showAlert(err.message, 'error'); }
+          finally { setLoading(false); }
         });
       });
     }
 
-    async function handleStudentSubmit(event) {
-      event.preventDefault();
-      const form = new FormData(event.target);
-      const rowData = [form.get('MaHS'), form.get('TenHS'), form.get('NgaySinh'), form.get('Lop'), form.get('TenPhuHuynh'), form.get('SDT')];
-      setLoading(true);
-      try {
-        await apiPost({ action: 'HocSinh', rowData });
-        showAlert('Thêm học sinh thành công.');
-        event.target.reset();
-        loadStudents();
-      } catch (error) {
-        showAlert(error.message, 'error');
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    async function handleTeacherSubmit(event) {
-      event.preventDefault();
-      const form = new FormData(event.target);
-      const rowData = [form.get('MaGV'), form.get('TenGV'), form.get('SDT'), form.get('LopPhuTrach'), form.get('LuongCoBan')];
-      setLoading(true);
-      try {
-        await apiPost({ action: 'GiaoVien', rowData });
-        showAlert('Thêm giáo viên thành công.');
-        event.target.reset();
-        loadTeachers();
-      } catch (error) {
-        showAlert(error.message, 'error');
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    async function handleAttendanceSubmit(event) {
-      event.preventDefault();
-      const members = state.attendanceType === 'HocSinh' ? state.students : state.teachers;
-      if (!members.length) {
-        showAlert('Không có dữ liệu để chấm công.', 'warning');
-        return;
-      }
-      setLoading(true);
-      try {
-        const promises = members.map((row, index) => {
-          const key = `${state.attendanceType}-${row[0]}-${index}`;
-          const TrangThai = state.attendanceStatus[key] || 'Đi học';
-          const rowData = [state.attendanceDate, row[0], row[1], state.attendanceType, TrangThai, 'Hệ thống'];
-          return apiPost({ action: 'ChamCong', rowData });
-        });
-        await Promise.all(promises);
-        showAlert('Đã lưu chấm công cho tất cả thành viên.');
-      } catch (error) {
-        showAlert(error.message, 'error');
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    function handleTuitionPreview() {
-      const form = document.getElementById('tuitionForm');
-      if (!form) return;
-      const phi = Number(form.querySelector('input[name="PhiCoDinh"]').value || 0);
-      const ngayAn = Number(form.querySelector('input[name="SoNgayAn"]').value || 0);
-      const tienAn = Number(form.querySelector('input[name="TienAn"]').value || 0);
-      const total = phi + ngayAn + tienAn;
-      document.getElementById('previewPhiCoDinh').textContent = new Intl.NumberFormat('vi-VN').format(phi);
-      document.getElementById('previewSoNgayAn').textContent = ngayAn;
-      document.getElementById('previewTienAn').textContent = new Intl.NumberFormat('vi-VN').format(tienAn);
-      document.getElementById('previewTongTien').textContent = new Intl.NumberFormat('vi-VN').format(total);
-    }
-
-    async function handleTuitionSubmit(event) {
-      event.preventDefault();
-      const form = new FormData(event.target);
-      const Thang = form.get('Thang');
-      const MaHS = form.get('MaHS');
-      const TenHS = form.get('TenHS');
-      const PhiCoDinh = form.get('PhiCoDinh');
-      const SoNgayAn = form.get('SoNgayAn');
-      const TienAn = form.get('TienAn');
-      const TongTien = Number(PhiCoDinh || 0) + Number(SoNgayAn || 0) + Number(TienAn || 0);
-      const TrangThai = form.get('TrangThai');
-      if (!Thang || !MaHS || !TenHS) {
-        showAlert('Vui lòng nhập đầy đủ thông tin học phí.', 'warning');
-        return;
-      }
-      setLoading(true);
-      try {
-        await apiPost({ action: 'HocPhi', rowData: [Thang, MaHS, TenHS, PhiCoDinh, SoNgayAn, TienAn, TongTien, TrangThai] });
-        showAlert('Lưu học phí thành công.');
-        event.target.reset();
-        loadTuition();
-      } catch (error) {
-        showAlert(error.message, 'error');
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    async function handleTuitionUpdateStatus(event) {
-      const index = Number(event.currentTarget.dataset.index);
-      const record = state.tuitionRecords[index];
-      if (!record) return;
-      const currentStatus = record[7] || 'Chưa nộp';
-      const nextStatus = currentStatus === 'Đã nộp' ? 'Chưa nộp' : 'Đã nộp';
-      const updatedRow = [...record.slice(0, 7), nextStatus];
-      setLoading(true);
-      try {
-        await apiPost({ action: 'HocPhi', subAction: 'update', rowIndex: index, rowData: updatedRow });
-        showAlert(`Cập nhật trạng thái thành ${nextStatus}.`);
-        loadTuition();
-      } catch (error) {
-        showAlert(error.message, 'error');
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    async function handleNutritionSubmit(event) {
-      event.preventDefault();
-      const form = new FormData(event.target);
-      const rowData = [form.get('Ngay'), form.get('BuaSang'), form.get('BuaTrua'), form.get('BuaChieu'), form.get('NhanXetChung')];
-      if (!rowData[0] || !rowData[1] || !rowData[2] || !rowData[3]) {
-        showAlert('Vui lòng nhập đủ thông tin thực đơn.', 'warning');
-        return;
-      }
-      setLoading(true);
-      try {
-        await apiPost({ action: 'DinhDuong', rowData });
-        showAlert('Thêm thực đơn thành công.');
-        event.target.reset();
-        loadMenus();
-      } catch (error) {
-        showAlert(error.message, 'error');
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    mobileNavToggle.addEventListener('click', () => {
-      mobileTabsPanel.classList.toggle('hidden');
-    });
-
+    mobileNavToggle.addEventListener('click', () => mobileTabsPanel.classList.toggle('hidden'));
     tabs.forEach(button => button.addEventListener('click', () => updateActiveTab(button.dataset.tab)));
     mobileTabs.forEach(button => button.addEventListener('click', () => updateActiveTab(button.dataset.tab)));
 
-    window.addEventListener('resize', () => {
-      if (window.innerWidth >= 640) mobileTabsPanel.classList.add('hidden');
-    });
-
-    updateActiveTab(state.activeTab);
+    // Điểm khởi chạy hệ thống mượt mà
+    updateActiveTab('HocSinh');
   </script>
 </body>
 </html>
