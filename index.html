@@ -3,525 +3,798 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Hệ Thống Mầm Non Thái Dương</title>
+  <title>Quản lý Mầm non Thái Dương</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  <script src="https://unpkg.com/lucide@latest"></script>
   <style>
-    body { font-family: 'Plus Jakarta Sans', sans-serif; background: radial-gradient(at top left, #f8fafc, #f1f5f9); }
-    .glass { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.6); }
-    .animate-up { animation: fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-    @keyframes fadeInUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
-    .spinner { animation: spin 1s linear infinite; }
-    @keyframes spin { 100% { transform: rotate(360deg); } }
-    
-    @media print {
-      body * { visibility: hidden; }
-      #printSection, #printSection * { visibility: visible; }
-      #printSection { position: absolute; left: 0; top: 0; width: 100%; }
-      .no-print { display: none !important; }
+    :root {
+      color-scheme: light;
+    }
+    body {
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    .brand-bg { background: linear-gradient(135deg, #56b2ff 0%, #83d0ff 100%); }
+    .brand-border { border-color: #f7c948; }
+    .brand-accent { color: #ff7fa3; }
+    .soft-card { background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(16px); }
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.35rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
     }
   </style>
 </head>
-<body class="min-h-screen text-slate-800 antialiased selection:bg-blue-500 selection:text-white">
-
-  <div class="min-h-screen flex flex-col no-print">
-    <header class="bg-gradient-to-r from-slate-900 to-blue-900 text-white shadow-xl sticky top-0 z-50">
-      <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-        <div class="flex items-center gap-3">
-          <div class="p-2 bg-white/10 rounded-2xl"><i data-lucide="sun" class="w-7 h-7 text-amber-300"></i></div>
-          <div>
-            <h1 class="text-xl font-extrabold tracking-tight">Mầm Non Thái Dương</h1>
-            <p class="text-xs text-slate-300">Hệ thống quản lý điểm danh & tính phí tự động</p>
-          </div>
+<body class="min-h-screen bg-slate-100 text-slate-900">
+  <div class="min-h-screen flex flex-col">
+    <header class="brand-bg text-white p-4 sm:p-6 shadow-lg shadow-slate-300/20">
+      <div class="max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 class="text-3xl font-extrabold tracking-tight">Trường Mầm non Thái Dương</h1>
+          <p class="mt-2 text-slate-100/90">Quản lý học sinh, giáo viên, chấm công, học phí và dinh dưỡng.</p>
         </div>
-        <nav class="hidden md:flex items-center gap-1.5 bg-white/5 p-1.5 rounded-2xl">
-          <button data-tab="HocSinh" class="tab-btn flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition-all">Học Sinh</button>
-          <button data-tab="GiaoVien" class="tab-btn flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition-all">Giáo Viên</button>
-          <button data-tab="ChamCong" class="tab-btn flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition-all">Chấm Công Lớp Học</button>
-          <button data-tab="HocPhi" class="tab-btn flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition-all">Tính Học Phí & In Phiếu</button>
+        <button id="mobileNavToggle" class="sm:hidden rounded-full border border-slate-200/40 bg-white/10 px-4 py-2 text-sm font-semibold transition hover:bg-white/20">Menu</button>
+        <nav id="tabsNav" class="hidden sm:flex gap-2 flex-wrap items-center">
+          <button data-tab="HocSinh" class="tab-button rounded-2xl bg-white/15 px-4 py-2 text-sm font-semibold transition hover:bg-white/30">Học Sinh</button>
+          <button data-tab="GiaoVien" class="tab-button rounded-2xl bg-white/15 px-4 py-2 text-sm font-semibold transition hover:bg-white/30">Giáo Viên</button>
+          <button data-tab="ChamCong" class="tab-button rounded-2xl bg-white/15 px-4 py-2 text-sm font-semibold transition hover:bg-white/30">Chấm Công</button>
+          <button data-tab="HocPhi" class="tab-button rounded-2xl bg-white/15 px-4 py-2 text-sm font-semibold transition hover:bg-white/30">Học Phí</button>
+          <button data-tab="DinhDuong" class="tab-button rounded-2xl bg-white/15 px-4 py-2 text-sm font-semibold transition hover:bg-white/30">Dinh Dưỡng</button>
         </nav>
+      </div>
+      <div id="mobileTabs" class="sm:hidden mt-4 hidden flex-col gap-2">
+        <button data-tab="HocSinh" class="mobile-tab-button rounded-2xl bg-white/15 px-4 py-3 text-left text-sm font-semibold">Học Sinh</button>
+        <button data-tab="GiaoVien" class="mobile-tab-button rounded-2xl bg-white/15 px-4 py-3 text-left text-sm font-semibold">Giáo Viên</button>
+        <button data-tab="ChamCong" class="mobile-tab-button rounded-2xl bg-white/15 px-4 py-3 text-left text-sm font-semibold">Chấm Công</button>
+        <button data-tab="HocPhi" class="mobile-tab-button rounded-2xl bg-white/15 px-4 py-3 text-left text-sm font-semibold">Học Phí</button>
+        <button data-tab="DinhDuong" class="mobile-tab-button rounded-2xl bg-white/15 px-4 py-3 text-left text-sm font-semibold">Dinh Dưỡng</button>
       </div>
     </header>
 
-    <main class="flex-1 max-w-7xl w-full mx-auto px-4 py-6">
-      <div id="alertBanner" class="hidden rounded-2xl border p-4 mb-6 text-sm flex items-center gap-3 font-medium shadow-md transition-all"></div>
-      <div id="contentArea" class="animate-up"></div>
+    <main class="flex-1 max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
+      <section class="space-y-6">
+        <div id="alertBanner" class="hidden rounded-3xl border border-slate-300/70 bg-white shadow-sm p-4 text-sm text-slate-700"></div>
+        <div id="contentArea" class="space-y-6"></div>
+      </section>
     </main>
   </div>
 
-  <div id="printSection" class="hidden p-8 bg-white text-black max-w-2xl mx-auto border-2 border-dashed border-slate-300 rounded-xl my-4"></div>
-
   <script>
-    // GIỮ NGUYÊN LINK WEB APP GOOGLE SCRIPT CỦA BẠN TẠI ĐÂY
-    const API_URL = "https://script.google.com/macros/s/AKfycbz0xRM4WZ4rXV9j163iLlXD3n2mUXolILG_Z7Xbk3b01IBwST1BKrcIoBS4r96HsZKT/exec";
+    // GIỮ NGUYÊN LINK GOOGLE SCRIPT CỦA BẠN
+    const API_URL = "https://script.google.com/macros/s/AKfycbzH66RiU7musvItOBabE5mvVaCPIFtJSmlEkAM3LZsS-DX1tdzJJ-JM3QMiQ1COjBNt/exec";
     
-    const SCHOOL_CONFIG = {
-      phiCoDinh: 1200000, 
-      tienAnMoiBuoi: 35000 
-    };
-
     const state = {
       activeTab: 'HocSinh',
       students: [],
       teachers: [],
-      attendance: [],
+      attendanceType: 'HocSinh',
+      attendanceDate: new Date().toISOString().slice(0, 10),
+      attendanceStatus: {},
+      selectedClass: '', // Bộ lọc lớp được chọn ở tab chấm công học sinh
       tuitionRecords: [],
+      nutritionMenus: [],
       loading: false,
-      selectedClass: '' // Lưu lớp giáo viên đang chọn để chấm công
+      selectedTuitionIndex: null,
     };
 
+    const alertBanner = document.getElementById('alertBanner');
+    const contentArea = document.getElementById('contentArea');
+    const tabs = Array.from(document.querySelectorAll('.tab-button'));
+    const mobileTabs = Array.from(document.querySelectorAll('.mobile-tab-button'));
+    const mobileNavToggle = document.getElementById('mobileNavToggle');
+    const mobileTabsPanel = document.getElementById('mobileTabs');
+
     function showAlert(message, type = 'success') {
-      const banner = document.getElementById('alertBanner');
-      banner.className = `flex items-center gap-3 p-4 mb-6 rounded-2xl border text-sm font-medium shadow-sm transition-all duration-300 ${type === 'success' ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : 'border-rose-200 bg-rose-50 text-rose-800'}`;
-      banner.innerHTML = `<i data-lucide="${type === 'success' ? 'check-circle' : 'alert-circle'}" class="w-5 h-5"></i><span>${message}</span>`;
-      lucide.createIcons();
-      banner.classList.remove('hidden');
-      setTimeout(() => banner.classList.add('hidden'), 4000);
+      alertBanner.textContent = message;
+      alertBanner.classList.remove('hidden', 'border-green-300', 'border-yellow-300', 'border-red-300', 'bg-green-50', 'bg-yellow-50', 'bg-red-50', 'text-green-800', 'text-yellow-800', 'text-red-800');
+      if (type === 'success') alertBanner.classList.add('border-green-300', 'bg-green-50', 'text-green-800');
+      if (type === 'warning') alertBanner.classList.add('border-yellow-300', 'bg-yellow-50', 'text-yellow-800');
+      if (type === 'error') alertBanner.classList.add('border-red-300', 'bg-red-50', 'text-red-800');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      setTimeout(() => alertBanner.classList.add('hidden'), 5000);
     }
 
-    async function apiFetch(action) {
-      const res = await fetch(`${API_URL}?action=${action}`);
-      return res.json();
-    }
-
-    async function apiPush(payload) {
-      const res = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(payload) });
-      return res.json();
-    }
-
-    async function syncData(tab) {
-      state.loading = true;
-      render();
+    async function apiGet(action) {
       try {
-        state.students = await apiFetch('HocSinh');
-        state.teachers = await apiFetch('GiaoVien');
-        state.attendance = await apiFetch('ChamCong');
-        state.tuitionRecords = await apiFetch('HocPhi');
-      } catch (e) { showAlert("Lỗi đồng bộ dữ liệu đám mây.", "error"); }
-      state.loading = false;
+        const response = await fetch(`${API_URL}?action=${encodeURIComponent(action)}`);
+        if (!response.ok) throw new Error('Không tải được dữ liệu');
+        return await response.json();
+      } catch (error) {
+        throw new Error(error.message || 'Lỗi kết nối API');
+      }
+    }
+
+    async function apiPost(payload) {
+      try {
+        const response = await fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        if (!response.ok) throw new Error('Gửi dữ liệu không thành công');
+        return await response.json();
+      } catch (error) {
+        throw new Error(error.message || 'Lỗi kết nối API');
+      }
+    }
+
+    function setLoading(isLoading) {
+      state.loading = isLoading;
       render();
     }
 
-    function changeTab(tab) {
+    async function loadStudents() {
+      setLoading(true);
+      try {
+        const data = await apiGet('HocSinh');
+        state.students = Array.isArray(data) ? data : [];
+      } catch (error) {
+        showAlert(error.message, 'error');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    async function loadTeachers() {
+      setLoading(true);
+      try {
+        const data = await apiGet('GiaoVien');
+        state.teachers = Array.isArray(data) ? data : [];
+      } catch (error) {
+        showAlert(error.message, 'error');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    async function loadTuition() {
+      setLoading(true);
+      try {
+        const data = await apiGet('HocPhi');
+        state.tuitionRecords = Array.isArray(data) ? data : [];
+      } catch (error) {
+        showAlert(error.message, 'error');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    async function loadMenus() {
+      setLoading(true);
+      try {
+        const data = await apiGet('DinhDuong');
+        state.nutritionMenus = Array.isArray(data) ? data : [];
+      } catch (error) {
+        showAlert(error.message, 'error');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    function updateActiveTab(tab) {
       state.activeTab = tab;
-      document.querySelectorAll('.tab-btn').forEach(btn => {
-        const isCurrent = btn.dataset.tab === tab;
-        btn.className = `tab-btn flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition-all ${isCurrent ? 'bg-white text-slate-900 shadow-md' : 'text-slate-300 hover:bg-white/10'}`;
-      });
-      syncData(tab);
+      tabs.forEach(btn => btn.classList.toggle('bg-white/30', btn.dataset.tab === tab));
+      mobileTabs.forEach(btn => btn.classList.toggle('bg-white/30', btn.dataset.tab === tab));
+      render();
+      if (tab === 'HocSinh') loadStudents();
+      if (tab === 'GiaoVien') loadTeachers();
+      if (tab === 'ChamCong') {
+        loadStudents();
+        loadTeachers();
+      }
+      if (tab === 'HocPhi') loadTuition();
+      if (tab === 'DinhDuong') loadMenus();
+      if (window.innerWidth < 640) mobileTabsPanel.classList.add('hidden');
     }
 
-    // 1. GIAO DIỆN HỌC SINH
-    function viewHocSinh() {
-      const list = state.students.map(r => `
-        <div class="border border-slate-200 bg-white p-4 rounded-2xl shadow-sm flex justify-between items-center">
-          <div>
-            <span class="text-xs bg-blue-50 text-blue-600 font-bold px-2 py-0.5 rounded-md">Lớp ${r[3]}</span>
-            <h4 class="font-bold text-slate-800 text-lg mt-1">${r[1]}</h4>
-            <p class="text-xs text-slate-500 mt-1">Phụ huynh: ${r[4]} | SĐT: ${r[5]}</p>
-          </div>
-          <span class="font-mono text-xs text-slate-400 bg-slate-50 px-2 py-1 rounded-md">${r[0]}</span>
-        </div>
-      `).join('');
-
-      return `
-        <div class="grid gap-6 md:grid-cols-[1fr_360px]">
-          <div>
-            <div class="glass rounded-3xl p-6 mb-6 flex justify-between items-center">
-              <div><h2 class="text-xl font-bold">Danh Sách Học Sinh</h2><p class="text-xs text-slate-500">Hồ sơ gốc lưu trữ thông tin các bé toàn trường.</p></div>
-              <div class="bg-blue-600 text-white px-3 py-1.5 rounded-xl text-xs font-bold">Tổng số: ${state.students.length} bé</div>
-            </div>
-            <div class="grid gap-4 sm:grid-cols-2">${list || '<div class="col-span-2 text-center py-12 text-slate-400">Chưa có học sinh nào.</div>'}</div>
-          </div>
-          <div class="glass rounded-3xl p-6 border h-fit">
-            <h3 class="font-bold mb-4 flex items-center gap-2"><i data-lucide="plus-circle" class="text-blue-600"></i>Tiếp nhận học sinh mới</h3>
-            <form id="f_student" class="space-y-3">
-              <input name="id" placeholder="Mã học sinh (Ví dụ: HSMN1)" required class="w-full border px-4 py-2 rounded-xl text-sm outline-none focus:border-blue-500 bg-white" />
-              <input name="name" placeholder="Họ và tên bé" required class="w-full border px-4 py-2 rounded-xl text-sm outline-none focus:border-blue-500 bg-white" />
-              <input name="dob" type="date" required class="w-full border px-4 py-2 rounded-xl text-sm outline-none focus:border-blue-500 bg-white" />
-              <input name="class" placeholder="Lớp (Ví dụ: MẦM 2, CHỒI 1)" required class="w-full border px-4 py-2 rounded-xl text-sm outline-none focus:border-blue-500 bg-white" />
-              <input name="parent" placeholder="Họ tên phụ huynh" required class="w-full border px-4 py-2 rounded-xl text-sm outline-none focus:border-blue-500 bg-white" />
-              <input name="phone" placeholder="Số điện thoại liên hệ" required class="w-full border px-4 py-2 rounded-xl text-sm outline-none focus:border-blue-500 bg-white" />
-              <button class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl text-sm shadow-md">Lưu Hồ Sơ Gốc</button>
-            </form>
-          </div>
-        </div>
-      `;
-    }
-
-    // 2. GIAO DIỆN GIÁO VIÊN
-    function viewGiaoVien() {
-      const list = state.teachers.map(r => `
-        <div class="border border-slate-200 bg-white p-4 rounded-2xl shadow-sm flex justify-between items-center">
-          <div>
-            <h4 class="font-bold text-slate-800 text-base">${r[1]}</h4>
-            <p class="text-xs text-slate-500 mt-0.5">Phụ trách lớp: <strong class="text-slate-700">${r[3]}</strong></p>
-            <p class="text-xs text-emerald-600 font-semibold mt-1">Lương cơ bản: ${new Intl.NumberFormat('vi-VN').format(r[4])} đ</p>
-          </div>
-          <span class="font-mono text-xs text-slate-400 bg-slate-50 px-2 py-1 rounded-md">${r[0]}</span>
-        </div>
-      `).join('');
-
-      return `
-        <div class="grid gap-6 md:grid-cols-[1fr_360px]">
-          <div>
-            <div class="glass rounded-3xl p-6 mb-6"><h2 class="text-xl font-bold">Danh Sách Giáo Viên</h2><p class="text-xs text-slate-500">Quản lý hồ sơ nhân sự và phân lớp phụ trách.</p></div>
-            <div class="grid gap-4 sm:grid-cols-2">${list || '<div class="col-span-2 text-center py-12 text-slate-400">Chưa có giáo viên nào.</div>'}</div>
-          </div>
-          <div class="glass rounded-3xl p-6 border h-fit">
-            <h3 class="font-bold mb-4 flex items-center gap-2"><i data-lucide="user-plus" class="text-slate-900"></i>Thêm giáo viên mới</h3>
-            <form id="f_teacher" class="space-y-3">
-              <input name="id" placeholder="Mã giáo viên (Ví dụ: GV01)" required class="w-full border px-4 py-2 rounded-xl text-sm outline-none focus:border-slate-900 bg-white" />
-              <input name="name" placeholder="Họ và tên giáo viên" required class="w-full border px-4 py-2 rounded-xl text-sm outline-none focus:border-slate-900 bg-white" />
-              <input name="phone" placeholder="Số điện thoại" required class="w-full border px-4 py-2 rounded-xl text-sm outline-none focus:border-slate-900 bg-white" />
-              <input name="class" placeholder="Lớp phụ trách (Ví dụ: CHỒI 2)" required class="w-full border px-4 py-2 rounded-xl text-sm outline-none focus:border-slate-900 bg-white" />
-              <input name="salary" type="number" placeholder="Mức lương cơ bản" required class="w-full border px-4 py-2 rounded-xl text-sm outline-none focus:border-slate-900 bg-white" />
-              <button class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-2.5 rounded-xl text-sm">Đăng Ký Nhân Sự</button>
-            </form>
-          </div>
-        </div>
-      `;
-    }
-
-    // 3. GIAO DIỆN CHẤM CÔNG PHÂN THEO LỚP CỦA GIÁO VIÊN
-    function viewChamCong() {
-      // Tự động tìm tất cả các lớp đang có học sinh học để đưa vào bộ lọc
-      const availableClasses = [...new Set(state.students.map(s => s[3].trim().toUpperCase()))];
-      const today = new Date().toISOString().slice(0, 10);
-
-      // Lọc ra danh sách học sinh thuộc lớp đang được giáo viên chọn
-      const filteredStudents = state.selectedClass 
-        ? state.students.filter(s => s[3].trim().toUpperCase() === state.selectedClass.toUpperCase())
-        : [];
-
-      // Render danh sách học sinh kèm ô chọn không lỗi kẹt click
-      const itemsHtml = filteredStudents.map((r) => `
-        <div class="border border-slate-200 bg-white p-4 rounded-xl shadow-sm flex flex-col sm:flex-row justify-between sm:items-center gap-4">
-          <div class="flex items-center gap-3">
-            <div class="w-9 h-9 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-xs">${r[0]}</div>
-            <div>
-              <span class="font-bold text-slate-800 block">${r[1]}</span>
-              <span class="text-[11px] text-slate-400">Phụ huynh: ${r[4]}</span>
-            </div>
-          </div>
-          
-          <div class="flex items-center gap-4 bg-slate-50 border px-3 py-2 rounded-xl self-start sm:self-auto">
-            <label class="flex items-center gap-1.5 text-xs font-semibold text-emerald-600 cursor-pointer">
-              <input type="radio" name="att-${r[0]}" value="Đi học" checked class="w-4 h-4 accent-emerald-500" /> Đi học
-            </label>
-            <label class="flex items-center gap-1.5 text-xs font-semibold text-amber-600 cursor-pointer">
-              <input type="radio" name="att-${r[0]}" value="Nghỉ có phép" class="w-4 h-4 accent-amber-500" /> Nghỉ có phép
-            </label>
-            <label class="flex items-center gap-1.5 text-xs font-semibold text-rose-600 cursor-pointer">
-              <input type="radio" name="att-${r[0]}" value="Vắng" class="w-4 h-4 accent-rose-500" /> Không phép
-            </label>
-          </div>
-        </div>
-      `).join('');
-
-      return `
-        <div class="max-w-3xl mx-auto space-y-6">
-          <div class="glass rounded-3xl p-6">
-            <h2 class="text-xl font-bold flex items-center gap-2"><i data-lucide="check-square" class="text-amber-500"></i>Ứng Dụng Điểm Danh Lớp Học</h2>
-            <p class="text-xs text-slate-500 mt-1">Giáo viên chọn lớp mình phụ trách để kiểm diện sỹ số các bé.</p>
-            
-            <div class="grid sm:grid-cols-2 gap-4 mt-4 border-t pt-4">
-              <div>
-                <label class="text-xs font-bold text-slate-400 block uppercase mb-1">Bước 1: Chọn lớp của bạn</label>
-                <select id="classSelector" class="w-full border px-3 py-2.5 rounded-xl font-bold text-slate-700 bg-white outline-none focus:border-amber-500">
-                  <option value="">-- Bấm chọn lớp học --</option>
-                  ${availableClasses.map(cls => `<option value="${cls}" ${state.selectedClass === cls ? 'selected' : ''}>LỚP ${cls}</option>`).join('')}
-                </select>
-              </div>
-              <div>
-                <label class="text-xs font-bold text-slate-400 block uppercase mb-1">Ngày chấm công</label>
-                <input type="date" id="attDate" value="${today}" required class="w-full border px-3 py-2.5 rounded-xl text-sm font-bold text-slate-800 bg-white outline-none" />
-              </div>
-            </div>
-          </div>
-
-          ${state.selectedClass ? `
-            <form id="f_attendance" class="glass rounded-3xl p-6 border space-y-4">
-              <div class="flex justify-between items-center border-b pb-3">
-                <span class="text-xs font-bold text-slate-400 uppercase">Danh sách học sinh lớp [${state.selectedClass}]</span>
-                <span class="text-xs bg-slate-900 text-white font-mono font-bold px-2 py-0.5 rounded-md">${filteredStudents.length} học sinh</span>
-              </div>
-              <div class="space-y-2 max-h-[450px] overflow-y-auto pr-1">
-                ${itemsHtml || '<p class="text-center py-6 text-slate-400">Lớp này hiện chưa có học sinh nào trong cơ sở dữ liệu.</p>'}
-              </div>
-              ${filteredStudents.length ? `<button class="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 rounded-xl text-sm shadow-lg shadow-amber-500/10">Xác Nhận & Gửi Bảng Điểm Danh</button>` : ''}
-            </form>
-          ` : `
-            <div class="border border-dashed border-slate-300 rounded-3xl p-12 text-center text-slate-400 text-sm">
-              <i data-lucide="arrow-up-circle" class="w-10 h-10 mx-auto mb-2 text-slate-300"></i>
-              Vui lòng chọn một lớp học ở trên để hiển thị danh sách điểm danh.
-            </div>
-          `}
-        </div>
-      `;
-    }
-
-    // 4. GIAO DIỆN TÍNH TOÁN & IN BIÊN LAI CUỐI THÁNG
-    function viewHocPhi() {
-      const selectOptions = state.students.map(r => `<option value="${r[0]}">${r[0]} - ${r[1]} (Lớp ${r[3]})</option>`).join('');
-
-      const tableRows = state.tuitionRecords.map((r, index) => {
-        const isPaid = r[7] === 'Đã nộp';
+    function buildStudentTab() {
+      const rows = state.students.map((row, index) => {
+        const [MaHS, TenHS, NgaySinh, Lop, TenPhuHuynh, SDT] = row;
         return `
-          <tr class="border-b last:border-0 hover:bg-slate-50/80 transition-all text-sm">
-            <td class="px-4 py-3 font-semibold text-slate-600">${r[0]}</td>
-            <td class="px-4 py-3 font-bold text-slate-800">${r[2]}</td>
-            <td class="px-4 py-3 text-center text-emerald-600 font-bold">${r[4]} buổi</td>
-            <td class="px-4 py-3 font-extrabold text-slate-900 text-right">${new Intl.NumberFormat('vi-VN').format(r[6])} đ</td>
-            <td class="px-4 py-3 text-center">
-              <span class="px-2.5 py-0.5 rounded-full text-xs font-bold ${isPaid?'bg-emerald-50 text-emerald-700':'bg-rose-50 text-rose-700'}">${r[7]}</span>
-            </td>
-            <td class="px-4 py-3 text-right space-x-1.5">
-              <button onclick="triggerUpdateInvoice(${index})" class="px-2.5 py-1 text-xs rounded-lg border bg-white font-medium hover:bg-slate-100">${isPaid?'Hủy nộp':'Thu tiền'}</button>
-              <button onclick="printInvoiceOffline(${index})" class="px-2.5 py-1 text-xs rounded-lg bg-slate-900 text-white font-bold hover:bg-slate-800"><i data-lucide="printer" class="w-3 h-3 inline mr-1"></i>In phiếu</button>
+          <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+              <div>
+                <p class="text-slate-500 text-sm">Mã HS</p>
+                <h3 class="mt-1 text-xl font-semibold text-slate-900">${MaHS || '-'} - ${TenHS || '-'}</h3>
+              </div>
+              <div class="flex flex-wrap gap-2">
+                <span class="status-badge bg-sky-100 text-sky-700">Lớp ${Lop || '-'}</span>
+                <span class="status-badge bg-amber-100 text-amber-800">Phụ huynh: ${TenPhuHuynh || '-'}</span>
+              </div>
+            </div>
+            <div class="mt-4 grid gap-3 sm:grid-cols-3 text-sm text-slate-600">
+              <div><span class="font-semibold">Ngày sinh:</span> ${NgaySinh || '-'}</div>
+              <div><span class="font-semibold">SĐT:</span> ${SDT || '-'}</div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      return `
+        <div class="grid gap-6">
+          <div class="rounded-3xl soft-card border border-slate-200 p-6 shadow-sm">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <h2 class="text-2xl font-bold text-slate-900">Học Sinh</h2>
+                <p class="mt-2 text-slate-600">Danh sách học sinh hiện tại và thêm mới nhanh chóng.</p>
+              </div>
+              <div class="rounded-3xl bg-amber-100 px-4 py-3 text-amber-900 font-semibold">Tổng: ${state.students.length}</div>
+            </div>
+          </div>
+
+          <div class="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+            <div class="space-y-4">
+              <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+                <h3 class="text-xl font-semibold text-slate-900">Danh sách học sinh</h3>
+                <div class="mt-4 space-y-4">
+                  ${rows || '<p class="text-slate-500">Không có học sinh. Vui lòng thêm mới.</p>'}
+                </div>
+              </div>
+            </div>
+            <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+              <h3 class="text-xl font-semibold text-slate-900">Thêm học sinh mới</h3>
+              <form id="studentForm" class="mt-5 space-y-4">
+                <div class="grid gap-4 sm:grid-cols-2">
+                  <label class="block text-sm font-medium text-slate-700">Mã HS<input name="MaHS" required class="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100" /></label>
+                  <label class="block text-sm font-medium text-slate-700">Tên HS<input name="TenHS" required class="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100" /></label>
+                </div>
+                <div class="grid gap-4 sm:grid-cols-2">
+                  <label class="block text-sm font-medium text-slate-700">Ngày sinh<input type="date" name="NgaySinh" required class="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100" /></label>
+                  <label class="block text-sm font-medium text-slate-700">Lớp<input name="Lop" required class="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100" /></label>
+                </div>
+                <div class="grid gap-4 sm:grid-cols-2">
+                  <label class="block text-sm font-medium text-slate-700">Tên phụ huynh<input name="TenPhuHuynh" required class="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100" /></label>
+                  <label class="block text-sm font-medium text-slate-700">SĐT<input name="SDT" required class="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100" /></label>
+                </div>
+                <button type="submit" class="w-full rounded-3xl bg-sky-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-sky-700">Lưu học sinh</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function buildTeacherTab() {
+      const rows = state.teachers.map((row) => {
+        const [MaGV, TenGV, SDT, LopPhuTrach, LuongCoBan] = row;
+        return `
+          <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+              <div>
+                <p class="text-slate-500 text-sm">Mã GV</p>
+                <h3 class="mt-1 text-xl font-semibold text-slate-900">${MaGV || '-'} - ${TenGV || '-'}</h3>
+              </div>
+              <div class="flex flex-wrap gap-2">
+                <span class="status-badge bg-sky-100 text-sky-700">Lớp phụ trách: ${LopPhuTrach || '-'}</span>
+                <span class="status-badge bg-amber-100 text-amber-800">Lương: ${LuongCoBan || '-'}</span>
+              </div>
+            </div>
+            <div class="mt-4 text-sm text-slate-600"><span class="font-semibold">SĐT:</span> ${SDT || '-'}</div>
+          </div>
+        `;
+      }).join('');
+
+      return `
+        <div class="grid gap-6">
+          <div class="rounded-3xl soft-card border border-slate-200 p-6 shadow-sm">
+            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+              <div>
+                <h2 class="text-2xl font-bold text-slate-900">Giáo Viên</h2>
+                <p class="mt-2 text-slate-600">Quản lý danh sách giáo viên và thêm mới nhanh.</p>
+              </div>
+              <div class="rounded-3xl bg-pink-100 px-4 py-3 text-pink-900 font-semibold">Tổng: ${state.teachers.length}</div>
+            </div>
+          </div>
+
+          <div class="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+            <div class="space-y-4">
+              <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+                <h3 class="text-xl font-semibold text-slate-900">Danh sách giáo viên</h3>
+                <div class="mt-4 space-y-4">
+                  ${rows || '<p class="text-slate-500">Chưa có giáo viên. Vui lòng thêm.</p>'}
+                </div>
+              </div>
+            </div>
+            <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+              <h3 class="text-xl font-semibold text-slate-900">Thêm giáo viên mới</h3>
+              <form id="teacherForm" class="mt-5 space-y-4">
+                <div class="grid gap-4 sm:grid-cols-2">
+                  <label class="block text-sm font-medium text-slate-700">Mã GV<input name="MaGV" required class="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100" /></label>
+                  <label class="block text-sm font-medium text-slate-700">Tên GV<input name="TenGV" required class="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100" /></label>
+                </div>
+                <div class="grid gap-4 sm:grid-cols-2">
+                  <label class="block text-sm font-medium text-slate-700">SĐT<input name="SDT" required class="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100" /></label>
+                  <label class="block text-sm font-medium text-slate-700">Lớp phụ trách<input name="LopPhuTrach" required class="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100" /></label>
+                </div>
+                <label class="block text-sm font-medium text-slate-700">Lương cơ bản<input name="LuongCoBan" type="number" min="0" required class="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100" /></label>
+                <button type="submit" class="w-full rounded-3xl bg-fuchsia-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-fuchsia-600">Lưu giáo viên</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function buildAttendanceTab() {
+      // Tìm toàn bộ danh sách lớp học hiện tại để đưa vào menu lọc lớp
+      const allClasses = [...new Set(state.students.map(s => (s[3] || '').trim()))].filter(Boolean);
+
+      // Lọc danh sách thành viên hiển thị dựa trên bộ lọc
+      let membersToDisplay = [];
+      if (state.attendanceType === 'HocSinh') {
+        membersToDisplay = state.selectedClass 
+          ? state.students.filter(s => (s[3] || '').trim() === state.selectedClass)
+          : state.students;
+      } else {
+        membersToDisplay = state.teachers;
+      }
+
+      const memberRows = membersToDisplay.map((row, index) => {
+        const Ma = row[0] || '';
+        const Ten = row[1] || '';
+        const ClassName = row[3] || '';
+        const key = `${state.attendanceType}-${Ma}-${index}`;
+        const currentStatus = state.attendanceStatus[key] || 'Đi học';
+
+        // Giao diện nút bấm Radio chuẩn - KHÔNG dùng class "hidden" gây kẹt tương tác
+        return `
+          <div class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p class="text-slate-500 text-xs uppercase font-bold tracking-wider">${state.attendanceType === 'HocSinh' ? `Học sinh - Lớp ${ClassName}` : 'Giáo viên'}</p>
+                <h3 class="mt-1 text-lg font-semibold text-slate-900">${Ma} - ${Ten}</h3>
+              </div>
+              <div class="flex flex-wrap items-center gap-4 bg-slate-50 border border-slate-200 px-4 py-2.5 rounded-2xl">
+                <label class="flex items-center gap-2 cursor-pointer text-sm font-medium text-emerald-700">
+                  <input type="radio" name="${key}" value="Đi học" ${currentStatus === 'Đi học' ? 'checked' : ''} class="w-4 h-4 accent-emerald-600" />
+                  Đi học
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer text-sm font-medium text-amber-700">
+                  <input type="radio" name="${key}" value="Nghỉ có phép" ${currentStatus === 'Nghỉ có phép' ? 'checked' : ''} class="w-4 h-4 accent-amber-600" />
+                  Nghỉ có phép
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer text-sm font-medium text-rose-700">
+                  <input type="radio" name="${key}" value="Vắng" ${currentStatus === 'Vắng' ? 'checked' : ''} class="w-4 h-4 accent-rose-600" />
+                  Không phép
+                </label>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      return `
+        <div class="grid gap-6">
+          <div class="rounded-3xl soft-card border border-slate-200 p-6 shadow-sm">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <h2 class="text-2xl font-bold text-slate-900">Chấm Công Hệ Thống</h2>
+                <p class="mt-2 text-slate-600">Giáo viên chọn ngày, chọn lớp phụ trách để điểm danh sỹ số chính xác.</p>
+              </div>
+              <div class="rounded-3xl bg-sky-100 px-4 py-3 text-sky-900 font-semibold">Loại: ${state.attendanceType === 'HocSinh' ? 'Học sinh' : 'Giáo viên'}</div>
+            </div>
+          </div>
+
+          <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <form id="attendanceForm" class="space-y-5">
+              <div class="grid gap-4 md:grid-cols-3 items-end">
+                <label class="block text-sm font-medium text-slate-700">Ngày chấm công<input id="attendanceDate" type="date" value="${state.attendanceDate}" required class="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100" /></label>
+                
+                <label class="block text-sm font-medium text-slate-700">Đối tượng quản lý
+                  <select id="attendanceType" class="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100">
+                    <option value="HocSinh" ${state.attendanceType === 'HocSinh' ? 'selected' : ''}>Học Sinh (Trẻ em)</option>
+                    <option value="GiaoVien" ${state.attendanceType === 'GiaoVien' ? 'selected' : ''}>Giáo Viên (Nhân sự)</option>
+                  </select>
+                </label>
+
+                ${state.attendanceType === 'HocSinh' ? `
+                  <label class="block text-sm font-medium text-slate-700">Lọc theo Lớp Học
+                    <select id="classFilter" class="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-700 outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100">
+                      <option value="">-- Hiển thị tất cả các lớp --</option>
+                      ${allClasses.map(cls => `<option value="${cls}" ${state.selectedClass === cls ? 'selected' : ''}>Lớp ${cls}</option>`).join('')}
+                    </select>
+                  </label>
+                ` : '<div></div>'}
+              </div>
+
+              <div class="grid gap-4 mt-6">
+                ${memberRows || '<p class="text-slate-500 text-center py-6">Không tìm thấy dữ liệu thành viên phù hợp với bộ lọc lớp.</p>'}
+              </div>
+
+              ${membersToDisplay.length ? `
+                <button type="submit" class="w-full mt-4 rounded-3xl bg-amber-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-amber-600 shadow-md">Xác Nhận Lưu Toàn Bộ Bảng Chấm Công</button>
+              ` : ''}
+            </form>
+          </div>
+        </div>
+      `;
+    }
+
+    function buildTuitionTab() {
+      const rows = state.tuitionRecords.map((row, index) => {
+        const [Thang, MaHS, TenHS, PhiCoDinh, SoNgayAn, TienAn, TongTien, TrangThai] = row;
+        return `
+          <tr class="border-b border-slate-200 last:border-b-0">
+            <td class="px-4 py-3 text-sm text-slate-700">${Thang || '-'}</td>
+            <td class="px-4 py-3 text-sm text-slate-700">${MaHS || '-'}</td>
+            <td class="px-4 py-3 text-sm text-slate-700">${TenHS || '-'}</td>
+            <td class="px-4 py-3 text-sm text-slate-700">${PhiCoDinh || '0'}</td>
+            <td class="px-4 py-3 text-sm text-slate-700">${SoNgayAn || '0'}</td>
+            <td class="px-4 py-3 text-sm text-slate-700">${TienAn || '0'}</td>
+            <td class="px-4 py-3 text-sm text-slate-700">${TongTien || '0'}</td>
+            <td class="px-4 py-3 text-sm text-slate-700">${TrangThai || 'Chưa nộp'}</td>
+            <td class="px-4 py-3 text-right">
+              <button data-index="${index}" class="update-status-btn rounded-full border border-sky-300 bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-700 transition hover:bg-sky-100">Cập nhật</button>
             </td>
           </tr>
         `;
       }).join('');
 
+      const studentOptions = state.students.map(row => `<option value="${row[0] || ''}">${row[0]} - ${row[1] || ''}</option>`).join('');
+
+      const selectedStudent = state.students.find(r => r[0] === (state.selectedTuitionIndex !== null ? state.tuitionRecords[state.selectedTuitionIndex]?.[1] : '')) || [];
+      const selectedName = selectedStudent[1] || '';
+
       return `
-        <div class="grid gap-6 lg:grid-cols-[1fr_380px]">
-          <div class="space-y-6">
-            <div class="glass rounded-3xl p-6 flex justify-between items-center">
-              <div><h2 class="text-xl font-bold">Báo Cáo Học Phí & Biên Lai</h2><p class="text-xs text-slate-500">Bảng theo dõi đối soát và in phiếu nhanh cuối tháng.</p></div>
-              <div class="text-slate-500 text-xs font-mono bg-slate-100 px-3 py-1.5 rounded-xl hidden sm:block">Biểu phí: Cố định ${new Intl.NumberFormat('vi-VN').format(SCHOOL_CONFIG.phiCoDinh)}đ + Tiền ăn ${new Intl.NumberFormat('vi-VN').format(SCHOOL_CONFIG.tienAnMoiBuoi)}đ/buổi đi học</div>
-            </div>
-            <div class="glass rounded-3xl border overflow-x-auto">
-              <table class="w-full text-left border-collapse min-w-[600px]">
-                <thead>
-                  <tr class="bg-slate-50 text-slate-400 text-xs uppercase font-bold border-b">
-                    <th class="px-4 py-3">Tháng</th><th class="px-4 py-3">Học Sinh</th><th class="px-4 py-3 text-center">Số ngày ăn</th><th class="px-4 py-3 text-right">Tổng Tiền Phải Thu</th><th class="px-4 py-3 text-center">Trạng thái</th><th class="px-4 py-3"></th>
-                  </tr>
-                </thead>
-                <tbody class="divide-y bg-white">${tableRows || '<tr><td colspan="6" class="text-center py-12 text-slate-400">Chưa có biên lai nào được xuất.</td></tr>'}</tbody>
-              </table>
+        <div class="grid gap-6">
+          <div class="rounded-3xl soft-card border border-slate-200 p-6 shadow-sm">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <h2 class="text-2xl font-bold text-slate-900">Học Phí</h2>
+                <p class="mt-2 text-slate-600">Quản lý học phí theo tháng và trạng thái nộp tiền.</p>
+              </div>
+              <div class="rounded-3xl bg-sky-100 px-4 py-3 text-sky-900 font-semibold">Bản ghi: ${state.tuitionRecords.length}</div>
             </div>
           </div>
 
-          <div class="glass rounded-3xl p-6 border h-fit sticky top-24">
-            <h3 class="font-bold mb-1 flex items-center gap-2"><i data-lucide="calculator" class="text-violet-600"></i>Tính toán tự động</h3>
-            <p class="text-[11px] text-slate-400 mb-4">Hệ thống quét lịch sử điểm danh để tự cộng dồn ngày ăn.</p>
-            <form id="f_calc_tuition" class="space-y-3">
-              <div>
-                <label class="text-xs font-bold text-slate-400 block uppercase mb-1">Tháng tính học phí</label>
-                <input name="month" type="month" required class="w-full border px-4 py-2 rounded-xl text-sm font-semibold outline-none focus:border-violet-500 bg-white" />
+          <div class="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+            <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm overflow-x-auto">
+              <h3 class="text-xl font-semibold text-slate-900">Danh sách học phí</h3>
+              <div class="mt-4 min-w-[700px]">
+                <table class="w-full text-left text-sm text-slate-700">
+                  <thead class="bg-slate-50 text-slate-700">
+                    <tr>
+                      <th class="px-4 py-3">Tháng</th>
+                      <th class="px-4 py-3">Mã HS</th>
+                      <th class="px-4 py-3">Tên HS</th>
+                      <th class="px-4 py-3">Phí cố định</th>
+                      <th class="px-4 py-3">Số ngày ăn</th>
+                      <th class="px-4 py-3">Tiền ăn</th>
+                      <th class="px-4 py-3">Tổng tiền</th>
+                      <th class="px-4 py-3">Trạng thái</th>
+                      <th class="px-4 py-3"></th>
+                    </tr>
+                  </thead>
+                  <tbody>${rows || '<tr><td class="px-4 py-6 text-center text-slate-500" colspan="9">Không có dữ liệu học phí.</td></tr>'}</tbody>
+                </table>
               </div>
-              <div>
-                <label class="text-xs font-bold text-slate-400 block uppercase mb-1">Chọn Học Sinh</label>
-                <select name="id" id="calc_student_select" required class="w-full border px-3 py-2 rounded-xl text-sm font-semibold outline-none focus:border-violet-500 bg-white">
-                  <option value="">-- Chọn một học sinh --</option>${selectOptions}
-                </select>
-              </div>
-              
-              <div id="calcPreviewBox" class="hidden rounded-xl bg-slate-900 text-slate-200 p-4 font-mono text-xs space-y-1.5">
-                <div class="flex justify-between"><span>Số ngày đi học:</span><span id="p_di_hoc" class="text-emerald-400 font-bold">0 buổi</span></div>
-                <div class="flex justify-between border-b border-white/10 pb-1.5"><span>Số ngày nghỉ/vắng:</span><span id="p_nghi" class="text-rose-400 font-bold">0 buổi</span></div>
-                <div class="flex justify-between"><span>Học phí cố định:</span><span id="p_co_dinh">0đ</span></div>
-                <div class="flex justify-between border-b border-white/10 pb-1.5"><span>Tiền ăn lũy kế:</span><span id="p_tien_an">0đ</span></div>
-                <div class="flex justify-between font-bold text-amber-400 text-sm pt-0.5"><span>Tổng Học Phí:</span><span id="p_tong_tien">0đ</span></div>
-              </div>
-
-              <button type="submit" id="btnSubmitInvoice" disabled class="w-full bg-violet-600 hover:bg-violet-700 disabled:bg-slate-200 disabled:text-slate-400 text-white font-bold py-2.5 rounded-xl text-sm flex items-center justify-center gap-2"><i data-lucide="file-plus"></i> Phát Hành Biên Lai</button>
-            </form>
+            </div>
+            <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+              <h3 class="text-xl font-semibold text-slate-900">Cập nhật / thêm học phí</h3>
+              <form id="tuitionForm" class="mt-5 space-y-4">
+                <label class="block text-sm font-medium text-slate-700">Tháng<input name="Thang" placeholder="Ví dụ: 2026-05" required class="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100" /></label>
+                <label class="block text-sm font-medium text-slate-700">Mã HS<select name="MaHS" required class="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100">
+                  <option value="">Chọn học sinh</option>${studentOptions}
+                </select></label>
+                <label class="block text-sm font-medium text-slate-700">Tên HS<input name="TenHS" value="${selectedName}" required class="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100" /></label>
+                <div class="grid gap-4 sm:grid-cols-2">
+                  <label class="block text-sm font-medium text-slate-700">Phí cố định<input name="PhiCoDinh" type="number" min="0" value="0" step="1000" required class="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100" /></label>
+                  <label class="block text-sm font-medium text-slate-700">Số ngày ăn<input name="SoNgayAn" type="number" min="0" value="0" required class="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100" /></label>
+                </div>
+                <label class="block text-sm font-medium text-slate-700">Tiền ăn<input name="TienAn" type="number" min="0" value="0" required class="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100" /></label>
+                <div class="rounded-3xl border border-slate-200 bg-slate-50 p-4 text-slate-700">
+                  <div class="flex items-center justify-between text-sm"><span>Phí cố định</span><span id="previewPhiCoDinh">0</span></div>
+                  <div class="flex items-center justify-between text-sm"><span>Số ngày ăn</span><span id="previewSoNgayAn">0</span></div>
+                  <div class="flex items-center justify-between text-sm"><span>Tiền ăn</span><span id="previewTienAn">0</span></div>
+                  <div class="mt-3 flex items-center justify-between text-base font-semibold text-slate-900"><span>Tổng tiền</span><span id="previewTongTien">0</span></div>
+                </div>
+                <label class="block text-sm font-medium text-slate-700">Trạng thái
+                  <select name="TrangThai" class="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100">
+                    <option value="Chưa nộp">Chưa nộp</option>
+                    <option value="Đã nộp">Đã nộp</option>
+                  </select>
+                </label>
+                <button type="submit" class="w-full rounded-3xl bg-violet-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-violet-700">Lưu học phí</button>
+              </form>
+            </div>
           </div>
         </div>
       `;
     }
 
-    let tempCalculatedRow = null; 
-    function hookTuitionCalculation() {
-      const form = document.getElementById('f_calc_tuition');
-      if (!form) return;
-      
-      const selectStudent = document.getElementById('calc_student_select');
-      const inputMonth = form.querySelector('[name="month"]');
-      const previewBox = document.getElementById('calcPreviewBox');
-      const submitBtn = document.getElementById('btnSubmitInvoice');
+    function buildNutritionTab() {
+      const rows = state.nutritionMenus.slice().reverse().map((row) => {
+        const [Ngay, BuaSang, BuaTrua, BuaChieu, NhanXetChung] = row;
+        return `
+          <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
+              <div>
+                <p class="text-slate-500 text-sm">Ngày</p>
+                <h3 class="mt-1 text-lg font-semibold text-slate-900">${Ngay || '-'}</h3>
+              </div>
+              <span class="status-badge bg-amber-100 text-amber-800">Thực đơn mẫu</span>
+            </div>
+            <div class="mt-4 grid gap-3 sm:grid-cols-3 text-sm text-slate-700">
+              <div class="rounded-2xl bg-slate-50 p-4"><p class="font-semibold">Bữa sáng</p><p class="mt-2">${BuaSang || '-'}</p></div>
+              <div class="rounded-2xl bg-slate-50 p-4"><p class="font-semibold">Bữa trưa</p><p class="mt-2">${BuaTrua || '-'}</p></div>
+              <div class="rounded-2xl bg-slate-50 p-4"><p class="font-semibold">Bữa chiều</p><p class="mt-2">${BuaChieu || '-'}</p></div>
+            </div>
+            <div class="mt-4 rounded-2xl bg-slate-50 p-4 text-sm text-slate-600"><span class="font-semibold">Nhận xét:</span> ${NhanXetChung || '-'}</div>
+          </div>
+        `;
+      }).join('');
 
-      const triggerCalc = () => {
-        const maHS = selectStudent.value;
-        const thang = inputMonth.value; 
-        if (!maHS || !thang) { previewBox.classList.add('hidden'); submitBtn.disabled = true; return; }
+      return `
+        <div class="grid gap-6">
+          <div class="rounded-3xl soft-card border border-slate-200 p-6 shadow-sm">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <h2 class="text-2xl font-bold text-slate-900">Dinh Dưỡng</h2>
+                <p class="mt-2 text-slate-600">Lưu thực đơn hàng ngày và xem lại lịch sử dễ dàng.</p>
+              </div>
+              <div class="rounded-3xl bg-pink-100 px-4 py-3 text-pink-900 font-semibold">Dòng: ${state.nutritionMenus.length}</div>
+            </div>
+          </div>
 
-        const foundStudent = state.students.find(r => r[0] === maHS);
-        if(!foundStudent) return;
-
-        // Lấy lịch sử chấm công của học sinh này trong tháng được lựa chọn
-        const matchAtt = state.attendance.filter(r => {
-          const ngayCham = r[0]; 
-          return r[1] === maHS && ngayCham.startsWith(thang);
-        });
-
-        const diHoc = matchAtt.filter(r => r[4] === 'Đi học').length;
-        const nghi = matchAtt.filter(r => r[4] === 'Nghỉ có phép' || r[4] === 'Vắng').length;
-
-        const tongTienAn = diHoc * SCHOOL_CONFIG.tienAnMoiBuoi;
-        const tongTienPhaiNop = SCHOOL_CONFIG.phiCoDinh + tongTienAn;
-
-        document.getElementById('p_di_hoc').textContent = diHoc + " buổi";
-        document.getElementById('p_nghi').textContent = nghi + " buổi";
-        document.getElementById('p_co_dinh').textContent = new Intl.NumberFormat('vi-VN').format(SCHOOL_CONFIG.phiCoDinh) + " đ";
-        document.getElementById('p_tien_an').textContent = new Intl.NumberFormat('vi-VN').format(tongTienAn) + " đ";
-        document.getElementById('p_tong_tien').textContent = new Intl.NumberFormat('vi-VN').format(tongTienPhaiNop) + " đ";
-        
-        previewBox.classList.remove('hidden');
-        submitBtn.disabled = false;
-
-        // Đóng gói mảng đúng thứ tự cột của tab HocPhi trên Google Sheet
-        tempCalculatedRow = [thang, maHS, foundStudent[1], SCHOOL_CONFIG.phiCoDinh, diHoc, tongTienAn, tongTienPhaiNop, 'Chưa nộp'];
-      };
-
-      selectStudent.addEventListener('change', triggerCalc);
-      inputMonth.addEventListener('change', triggerCalc);
-    }
-
-    function printInvoiceOffline(index) {
-      const invoice = state.tuitionRecords[index];
-      if (!invoice) return;
-
-      const pSec = document.getElementById('printSection');
-      pSec.innerHTML = `
-        <div style="text-align: center; margin-bottom: 20px;">
-          <h2 style="font-size: 20px; font-weight: 800;">TRƯỜNG MẦM NON THÁI DƯƠNG</h2>
-          <p style="font-size: 13px; color: #555; margin-top: 4px;">PHIẾU THU HỌC PHÍ & TIỀN ĂN THÁNG: <strong>${invoice[0]}</strong></p>
-          <div style="margin: 10px auto; width: 80px; border-top: 2px solid #000"></div>
-        </div>
-        <div style="font-size: 14px; margin-bottom: 20px; line-height: 1.7">
-          <p>• Họ và tên học sinh: <strong>${invoice[2]}</strong></p>
-          <p>• Mã số học sinh: <strong>${invoice[1]}</strong></p>
-          <p>• Số ngày ăn học thực tế tại trường: <strong style="color: green">${invoice[4]} buổi</strong></p>
-        </div>
-        <table style="width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 13px;">
-          <thead>
-            <tr style="border-bottom: 2px solid #000; text-align: left">
-              <th style="padding: 6px 0">Các khoản mục chi phí</th>
-              <th style="padding: 6px 0; text-align: right">Thành tiền</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr style="border-bottom: 1px dashed #ccc">
-              <td style="padding: 10px 0">Học phí bán trú cố định</td>
-              <td style="padding: 10px 0; text-align: right">${new Intl.NumberFormat('vi-VN').format(invoice[3])} đ</td>
-            </tr>
-            <tr style="border-bottom: 2px solid #000">
-              <td style="padding: 10px 0">Tiền ăn lũy kế (${invoice[4]} buổi × ${new Intl.NumberFormat('vi-VN').format(SCHOOL_CONFIG.tienAnMoiBuoi)}đ)</td>
-              <td style="padding: 10px 0; text-align: right">${new Intl.NumberFormat('vi-VN').format(invoice[5])} đ</td>
-            </tr>
-            <tr style="font-size: 16px; font-weight: bold">
-              <td style="padding: 12px 0">TỔNG TIỀN PHẢI ĐÓNG:</td>
-              <td style="padding: 12px 0; text-align: right; color: red">${new Intl.NumberFormat('vi-VN').format(invoice[6])} đ</td>
-            </tr>
-          </tbody>
-        </table>
-        <div style="margin-top: 40px; display: flex; justify-content: space-between; font-size: 12px; font-style: italic">
-          <div style="text-align: center; width: 45%">Người lập biểu mẫu<br><br><br><br>(Ký và ghi rõ họ tên)</div>
-          <div style="text-align: center; width: 45%">Đại diện ban giám hiệu trường<br><br><br><br>(Ký, đóng dấu xác nhận)</div>
+          <div class="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+            <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+              <h3 class="text-xl font-semibold text-slate-900">Lịch sử thực đơn</h3>
+              <div class="mt-4 space-y-4">
+                ${rows || '<p class="text-slate-500">Chưa có thực đơn nào. Hãy thêm ngay.</p>'}
+              </div>
+            </div>
+            <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+              <h3 class="text-xl font-semibold text-slate-900">Nhập thực đơn mới</h3>
+              <form id="nutritionForm" class="mt-5 space-y-4">
+                <label class="block text-sm font-medium text-slate-700">Ngày<input name="Ngay" type="date" required class="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100" /></label>
+                <label class="block text-sm font-medium text-slate-700">Bữa sáng<textarea name="BuaSang" rows="2" required class="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100"></textarea></label>
+                <label class="block text-sm font-medium text-slate-700">Bữa trưa<textarea name="BuaTrua" rows="2" required class="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100"></textarea></label>
+                <label class="block text-sm font-medium text-slate-700">Bữa chiều<textarea name="BuaChieu" rows="2" required class="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100"></textarea></label>
+                <label class="block text-sm font-medium text-slate-700">Nhận xét chung<textarea name="NhanXetChung" rows="2" class="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100"></textarea></label>
+                <button type="submit" class="w-full rounded-3xl bg-sky-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-sky-700">Lưu thực đơn</button>
+              </form>
+            </div>
+          </div>
         </div>
       `;
-
-      pSec.classList.remove('hidden');
-      window.print();
-      pSec.classList.add('hidden');
-    }
-
-    async function triggerUpdateInvoice(index) {
-      const record = state.tuitionRecords[index];
-      if (!record) return;
-      const targetStatus = record[7] === 'Đã nộp' ? 'Chưa nộp' : 'Đã nộp';
-      const updatedRow = [...record.slice(0, 7), targetStatus];
-      state.loading = true; render();
-      try {
-        await apiPush({ action: 'HocPhi', subAction: 'update', rowIndex: index, rowData: updatedRow });
-        showAlert("Đã thay đổi trạng thái đóng phí.");
-        syncData(state.activeTab);
-      } catch (e) { showAlert("Lỗi kết nối.", "error"); state.loading = false; render(); }
     }
 
     function render() {
-      const area = document.getElementById('contentArea');
+      let html = '';
       if (state.loading) {
-        area.innerHTML = `<div class="glass rounded-3xl p-12 text-center text-slate-500 flex flex-col items-center justify-center gap-3"><div class="spinner w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full"></div><p class="text-xs font-semibold text-blue-600">Đang đồng bộ dữ liệu với Google Drive...</p></div>`;
+        html = `<div class="rounded-3xl border border-slate-200 bg-white p-8 text-center text-slate-700 shadow-sm">Đang tải dữ liệu...</div>`;
+      } else if (state.activeTab === 'HocSinh') {
+        html = buildStudentTab();
+      } else if (state.activeTab === 'GiaoVien') {
+        html = buildTeacherTab();
+      } else if (state.activeTab === 'ChamCong') {
+        html = buildAttendanceTab();
+      } else if (state.activeTab === 'HocPhi') {
+        html = buildTuitionTab();
+      } else if (state.activeTab === 'DinhDuong') {
+        html = buildNutritionTab();
+      }
+      contentArea.innerHTML = html;
+      attachEventHandlers();
+    }
+
+    function attachEventHandlers() {
+      const studentForm = document.getElementById('studentForm');
+      if (studentForm) studentForm.addEventListener('submit', handleStudentSubmit);
+
+      const teacherForm = document.getElementById('teacherForm');
+      if (teacherForm) teacherForm.addEventListener('submit', handleTeacherSubmit);
+
+      const attendanceForm = document.getElementById('attendanceForm');
+      if (attendanceForm) attendanceForm.addEventListener('submit', handleAttendanceSubmit);
+
+      const attendanceTypeSelect = document.getElementById('attendanceType');
+      if (attendanceTypeSelect) attendanceTypeSelect.addEventListener('change', (event) => {
+        state.attendanceType = event.target.value;
+        state.selectedClass = ''; // Reset bộ lọc lớp khi chuyển đối tượng
+        render();
+      });
+
+      const classFilterSelect = document.getElementById('classFilter');
+      if (classFilterSelect) classFilterSelect.addEventListener('change', (event) => {
+        state.selectedClass = event.target.value;
+        render(); // Rerender nhanh để lọc danh sách học sinh theo lớp
+      });
+
+      const attendanceDateInput = document.getElementById('attendanceDate');
+      if (attendanceDateInput) attendanceDateInput.addEventListener('input', (event) => {
+        state.attendanceDate = event.target.value;
+      });
+
+      const tuitionForm = document.getElementById('tuitionForm');
+      if (tuitionForm) {
+        tuitionForm.addEventListener('submit', handleTuitionSubmit);
+        tuitionForm.addEventListener('input', handleTuitionPreview);
+        const studentSelect = tuitionForm.querySelector('select[name="MaHS"]');
+        if (studentSelect) studentSelect.addEventListener('change', (event) => {
+          const selected = state.students.find(row => row[0] === event.target.value);
+          const nameInput = tuitionForm.querySelector('input[name="TenHS"]');
+          if (nameInput) nameInput.value = selected ? selected[1] : '';
+          handleTuitionPreview();
+        });
+      }
+
+      const nutritionForm = document.getElementById('nutritionForm');
+      if (nutritionForm) nutritionForm.addEventListener('submit', handleNutritionSubmit);
+
+      const updateButtons = Array.from(document.querySelectorAll('.update-status-btn'));
+      updateButtons.forEach(button => button.addEventListener('click', handleTuitionUpdateStatus));
+
+      const radioInputs = Array.from(document.querySelectorAll('input[type="radio"]'));
+      radioInputs.forEach(radio => {
+        radio.addEventListener('change', (event) => {
+          const key = event.target.name;
+          state.attendanceStatus[key] = event.target.value;
+        });
+      });
+    }
+
+    async function handleStudentSubmit(event) {
+      event.preventDefault();
+      const form = new FormData(event.target);
+      const rowData = [form.get('MaHS'), form.get('TenHS'), form.get('NgaySinh'), form.get('Lop'), form.get('TenPhuHuynh'), form.get('SDT')];
+      setLoading(true);
+      try {
+        await apiPost({ action: 'HocSinh', rowData });
+        showAlert('Thêm học sinh thành công.');
+        event.target.reset();
+        await loadStudents();
+      } catch (error) {
+        showAlert(error.message, 'error');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    async function handleTeacherSubmit(event) {
+      event.preventDefault();
+      const form = new FormData(event.target);
+      const rowData = [form.get('MaGV'), form.get('TenGV'), form.get('SDT'), form.get('LopPhuTrach'), form.get('LuongCoBan')];
+      setLoading(true);
+      try {
+        await apiPost({ action: 'GiaoVien', rowData });
+        showAlert('Thêm giáo viên thành công.');
+        event.target.reset();
+        await loadTeachers();
+      } catch (error) {
+        showAlert(error.message, 'error');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    async function handleAttendanceSubmit(event) {
+      event.preventDefault();
+      let members = [];
+      if (state.attendanceType === 'HocSinh') {
+        members = state.selectedClass 
+          ? state.students.filter(s => (s[3] || '').trim() === state.selectedClass)
+          : state.students;
+      } else {
+        members = state.teachers;
+      }
+
+      if (!members.length) {
+        showAlert('Không có dữ liệu thành viên để chấm công.', 'warning');
         return;
       }
-      if (state.activeTab === 'HocSinh') area.innerHTML = viewHocSinh();
-      else if (state.activeTab === 'GiaoVien') area.innerHTML = viewGiaoVien();
-      else if (state.activeTab === 'ChamCong') { area.innerHTML = viewChamCong(); hookClassSelector(); }
-      else if (state.activeTab === 'HocPhi') { area.innerHTML = viewHocPhi(); hookTuitionCalculation(); }
-      
-      lucide.createIcons();
-      bindForms();
-    }
-
-    // Bắt sự kiện khi giáo viên chọn Lớp trong thẻ select
-    function hookClassSelector() {
-      const selector = document.getElementById('classSelector');
-      if (selector) {
-        selector.addEventListener('change', (e) => {
-          state.selectedClass = e.target.value;
-          render(); // Re-render để hiển thị danh sách học sinh của lớp tương ứng
+      setLoading(true);
+      try {
+        const promises = members.map((row, index) => {
+          const key = `${state.attendanceType}-${row[0]}-${index}`;
+          const TrangThai = state.attendanceStatus[key] || 'Đi học';
+          const rowData = [state.attendanceDate, row[0], row[1], state.attendanceType, TrangThai, 'Hệ thống'];
+          return apiPost({ action: 'ChamCong', rowData });
         });
+        await Promise.all(promises);
+        showAlert('Đã lưu chấm công thành công lên Cloud Google Sheet.');
+      } catch (error) {
+        showAlert(error.message, 'error');
+      } finally {
+        setLoading(false);
       }
     }
 
-    function bindForms() {
-      const f_student = document.getElementById('f_student');
-      if (f_student) f_student.addEventListener('submit', async (e) => {
-        e.preventDefault(); const f = new FormData(e.target);
-        const rowData = [f.get('id'), f.get('name'), f.get('dob'), f.get('class'), f.get('parent'), f.get('phone')];
-        state.loading = true; render();
-        try { await apiPush({ action: 'HocSinh', rowData }); showAlert('Thêm học sinh mới thành công.'); changeTab('HocSinh'); } 
-        catch (e) { showAlert('Gửi dữ liệu lỗi.', 'error'); syncData('HocSinh'); }
-      });
-
-      const f_teacher = document.getElementById('f_teacher');
-      if (f_teacher) f_teacher.addEventListener('submit', async (e) => {
-        e.preventDefault(); const f = new FormData(e.target);
-        const rowData = [f.get('id'), f.get('name'), f.get('phone'), f.get('class'), f.get('salary')];
-        state.loading = true; render();
-        try { await apiPush({ action: 'GiaoVien', rowData }); showAlert('Thêm giáo viên mới thành công.'); changeTab('GiaoVien'); } 
-        catch (e) { showAlert('Gửi dữ liệu lỗi.', 'error'); syncData('GiaoVien'); }
-      });
-
-      const f_attendance = document.getElementById('f_attendance');
-      if (f_attendance) f_attendance.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const date = document.getElementById('attDate').value;
-        const filteredStudents = state.students.filter(s => s[3].trim().toUpperCase() === state.selectedClass.toUpperCase());
-        
-        const bulkData = filteredStudents.map(r => {
-          const radio = f_attendance.querySelector(`input[name="att-${r[0]}"]:checked`);
-          return [date, r[0], r[1], 'HocSinh', radio ? radio.value : 'Đi học', 'Hệ thống Web'];
-        });
-
-        state.loading = true; render();
-        try { 
-          await apiPush({ action: 'ChamCong', bulkData }); 
-          showAlert(`Đã lưu bảng điểm danh lớp ${state.selectedClass} ngày ${date}.`); 
-          syncData('ChamCong'); 
-        } catch (e) { showAlert('Lỗi ghi dữ liệu.', 'error'); syncData('ChamCong'); }
-      });
-
-      const f_calc_tuition = document.getElementById('f_calc_tuition');
-      if (f_calc_tuition) f_calc_tuition.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        if (!tempCalculatedRow) return;
-        state.loading = true; render();
-        try {
-          await apiPush({ action: 'HocPhi', rowData: tempCalculatedRow });
-          showAlert('Đã phát hành biên lai lên Cloud thành công.');
-          tempCalculatedRow = null;
-          changeTab('HocPhi');
-        } catch (e) { showAlert('Thất bại', 'error'); syncData('HocPhi'); }
-      });
+    function handleTuitionPreview() {
+      const form = document.getElementById('tuitionForm');
+      if (!form) return;
+      const phi = Number(form.querySelector('input[name="PhiCoDinh"]').value || 0);
+      const ngayAn = Number(form.querySelector('input[name="SoNgayAn"]').value || 0);
+      const tienAn = Number(form.querySelector('input[name="TienAn"]').value || 0);
+      const total = phi + ngayAn + tienAn;
+      document.getElementById('previewPhiCoDinh').textContent = new Intl.NumberFormat('vi-VN').format(phi);
+      document.getElementById('previewSoNgayAn').textContent = ngayAn;
+      document.getElementById('previewTienAn').textContent = new Intl.NumberFormat('vi-VN').format(tienAn);
+      document.getElementById('previewTongTien').textContent = new Intl.NumberFormat('vi-VN').format(total);
     }
 
-    document.addEventListener("DOMContentLoaded", () => changeTab('HocSinh'));
+    async function handleTuitionSubmit(event) {
+      event.preventDefault();
+      const form = new FormData(event.target);
+      const Thang = form.get('Thang');
+      const MaHS = form.get('MaHS');
+      const TenHS = form.get('TenHS');
+      const PhiCoDinh = form.get('PhiCoDinh');
+      const SoNgayAn = form.get('SoNgayAn');
+      const TienAn = form.get('TienAn');
+      const TongTien = Number(PhiCoDinh || 0) + Number(SoNgayAn || 0) + Number(TienAn || 0);
+      const TrangThai = form.get('TrangThai');
+      if (!Thang || !MaHS || !TenHS) {
+        showAlert('Vui lòng nhập đầy đủ thông tin học phí.', 'warning');
+        return;
+      }
+      setLoading(true);
+      try {
+        await apiPost({ action: 'HocPhi', rowData: [Thang, MaHS, TenHS, PhiCoDinh, SoNgayAn, TienAn, TongTien, TrangThai] });
+        showAlert('Lưu học phí thành công.');
+        event.target.reset();
+        await loadTuition();
+      } catch (error) {
+        showAlert(error.message, 'error');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    async function handleTuitionUpdateStatus(event) {
+      const index = Number(event.currentTarget.dataset.index);
+      const record = state.tuitionRecords[index];
+      if (!record) return;
+      const currentStatus = record[7] || 'Chưa nộp';
+      const nextStatus = currentStatus === 'Đã nộp' ? 'Chưa nộp' : 'Đã nộp';
+      const updatedRow = [...record.slice(0, 7), nextStatus];
+      setLoading(true);
+      try {
+        await apiPost({ action: 'HocPhi', subAction: 'update', rowIndex: index, rowData: updatedRow });
+        showAlert(`Cập nhật trạng thái thành ${nextStatus}.`);
+        await loadTuition();
+      } catch (error) {
+        showAlert(error.message, 'error');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    async function handleNutritionSubmit(event) {
+      event.preventDefault();
+      const form = new FormData(event.target);
+      const rowData = [form.get('Ngay'), form.get('BuaSang'), form.get('BuaTrua'), form.get('BuaChieu'), form.get('NhanXetChung')];
+      if (!rowData[0] || !rowData[1] || !rowData[2] || !rowData[3]) {
+        showAlert('Vui lòng nhập đủ thông tin thực đơn.', 'warning');
+        return;
+      }
+      setLoading(true);
+      try {
+        await apiPost({ action: 'DinhDuong', rowData });
+        showAlert('Thêm thực đơn thành công.');
+        event.target.reset();
+        await loadMenus();
+      } catch (error) {
+        showAlert(error.message, 'error');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    mobileNavToggle.addEventListener('click', () => {
+      mobileTabsPanel.classList.toggle('hidden');
+    });
+
+    tabs.forEach(button => button.addEventListener('click', () => updateActiveTab(button.dataset.tab)));
+    mobileTabs.forEach(button => button.addEventListener('click', () => updateActiveTab(button.dataset.tab)));
+
+    window.addEventListener('resize', () => {
+      if (window.innerWidth >= 640) mobileTabsPanel.classList.add('hidden');
+    });
+
+    updateActiveTab(state.activeTab);
   </script>
 </body>
 </html>
